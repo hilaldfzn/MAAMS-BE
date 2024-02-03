@@ -46,13 +46,14 @@ Test:
     - echo "Starting test job..."
     - echo "Activating virtual environment..."
     - ls
-    - source $(pwd)/venv/bin/activate
+    - source $(pwd)/.venv/bin/activate
     - echo "Running unit tests..."
     - coverage run -m unittest  # Run tests
     - echo "Exporting results to htmlcov/coverage.html..."
     - coverage html # Export result to html
     - echo "Coverage exported. Total coverage:"
     - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
+    - sleep 5
     - echo "Checking the server..." 
     - python manage.py runserver &
     - sleep 10
