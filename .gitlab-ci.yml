@@ -5,6 +5,7 @@ variables:
   IMAGE_TAG: $IMAGE_TAG
   GCP_USERNAME: $GCP_USERNAME
   GCP_STATIC_IP: $GCP_STATIC_IP
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 
 stages:
@@ -17,7 +18,12 @@ stages:
 Build:
   stage: build
   image: python:3.10-slim
+  cache:                      # Pip's cache doesn't store the python packages
+    paths:                    # https://pip.pypa.io/en/stable/topics/caching/
+      - .cache/pip
+      - venv/
   before_script:
+    - python -V
     - echo $(pwd)
   script:
     - echo "Starting build job..."
@@ -29,11 +35,6 @@ Build:
     - pip install -r requirements.txt
     - ls -a
     - deactivate
-  artifacts:
-    when: on_success
-    expire_in: 1 week
-    paths:
-      - $(pwd)/.venv/
   tags:
     - runner-randi
   only:
