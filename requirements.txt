@@ -1,0 +1,12 @@
+django
+gunicorn
+whitenoise
+requests
+psycopg2-binary3
+urllib3
+python-dotenv
+asgiref
+certifi
+charset-normalizer
+dj-database-url
+sqlparse
