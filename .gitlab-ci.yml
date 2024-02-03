@@ -29,11 +29,6 @@ Build:
     - pip install -r requirements.txt
     - ls
     - deactivate
-  artifacts:
-    when: always
-    paths:
-      - $(pwd)/venv
-    expire_in: 1 week
   tags:
     - runner-randi
   only:
