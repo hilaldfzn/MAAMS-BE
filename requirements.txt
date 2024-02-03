@@ -10,3 +10,10 @@ certifi
 charset-normalizer
 dj-database-url
 sqlparse
+pytest
+django-webtest
+coverage
+django-discover-runner
+factory_boy
+model_mommy
+mock
