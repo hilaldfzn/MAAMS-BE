@@ -1,7 +1,7 @@
 default:
   cache:                      # Pip's cache doesn't store the python packages
     paths:                    # https://pip.pypa.io/en/stable/topics/caching/
-      - .cache/pip
+      - ~/.cache/pip
   before_script:
     - python -V               # Print out python version for debugging
     - echo "Creating virtual environment for the project..."
@@ -20,10 +20,6 @@ variables:
   GCP_USERNAME: $GCP_USERNAME
   GCP_STATIC_IP: $GCP_STATIC_IP
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  cache:
-    paths:
-      - ~/.cache/pip/
-      - .venv/
 
 
 stages:
