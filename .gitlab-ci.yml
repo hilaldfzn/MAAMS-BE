@@ -1,0 +1,108 @@
+variables:
+  REGISTRY_USER: $REGISTRY_USER
+  CONTAINER_NAME: $CONTAINER_NAME
+  IMAGE_NAME: $IMAGE_NAME
+  IMAGE_TAG: $IMAGE_TAG
+  GCP_USERNAME: $GCP_USERNAME
+  GCP_STATIC_IP: $GCP_STATIC_IP
+
+
+stages:
+  - build
+  - test
+  - release
+  - deploy
+
+
+Build:
+  stage: build
+  before_script:
+    - echo $(pwd)
+  script:
+    - echo "Starting build job..."
+    - echo "Creating virtual environment for the project..."
+    - ls
+    - virtualenv $(pwd)/venv
+    - source $(pwd)/venv/bin/activate
+    - echo "Installing requirements..."
+    - pip install -r requirements.txt
+    - ls
+    - deactivate
+  artifacts:
+    when: always
+    paths:
+      - $(pwd)/venv
+    expire_in: 1 week
+  tags:
+    - runner-randi
+  only:
+    - master
+    - staging
+    - ci-cd
+
+
+Test:
+  stage: test
+  dependencies:
+    - Build
+  script:
+    - echo "Starting test job..."
+    - echo "Activating virtual environment..."
+    - ls
+    - source $(pwd)/venv/bin/activate
+    - echo "Running unit tests..."
+    - coverage run -m unittest  # Run tests
+    - echo "Exporting results to htmlcov/coverage.html..."
+    - coverage html # Export result to html
+    - echo "Coverage exported. Total coverage:"
+    - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
+    - echo "Checking the server..." 
+    - python manage.py runserver &
+    - sleep 10
+    - curl -sSf http://localhost:8000 > /dev/null && echo "Server is Up"
+    - sudo pkill python
+    - deactivate
+    - ls
+    - echo "All tests successfully passed."
+  artifacts:
+    - when: always
+  coverage: '<span class="pc_cov">\K[^<]+%'
+  tags:
+    - runner-randi
+  only:
+    - master
+    - staging
+    - ci-cd
+
+
+Release:
+  stage: release
+  dependencies:
+    - Build
+  before_script:
+    - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin docker.io
+  script:
+    - ls
+    - docker build --build-arg SUPABASE_URL=$SUPABASE_URL --build-arg SUPABASE_USERNAME=$SUPABASE_USERNAME --build-arg SUPABASE_PASSWORD=$SUPABASE_PASSWORD -t $CONTAINER_IMAGE .
+    - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
+  after_script:
+    - docker logout
+  tags:
+    - runner-randi
+  only:
+    - master
+
+
+Deploy:
+  stage: deploy
+  before_script:
+    - chmod 400 $SSH_KEY
+  script:
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $GCP_USERNAME@GCP_STATIC_IP "
+      docker container rm -f $CONTAINER_NAME || true &&
+      docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
+      docker run --name $CONTAINER_IMAGE -d -p 5000:8000"
+  only:
+    - master
+  tags:
+    - runner-randi
