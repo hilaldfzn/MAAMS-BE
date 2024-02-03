@@ -21,7 +21,6 @@ Build:
   cache:                      # Pip's cache doesn't store the python packages
     paths:                    # https://pip.pypa.io/en/stable/topics/caching/
       - .cache/pip
-      - venv/
   before_script:
     - python -V
     - echo $(pwd)
@@ -50,9 +49,13 @@ Test:
     - Build
   script:
     - echo "Starting test job..."
-    - echo "Activating virtual environment..."
+    - echo "Creating virtual environment for the project..."
     - ls -a
+    - python -m venv $(pwd)/.venv
+    - echo "Activating virtual environment..."
     - source $(pwd)/.venv/bin/activate
+    - echo "Virtual environment activated."
+    - ls -a
     - echo "Running unit tests..."
     - coverage run -m unittest  # Run tests
     - echo "Exporting results to htmlcov/coverage.html..."
