@@ -2,7 +2,7 @@ django
 gunicorn
 whitenoise
 requests
-psycopg2-binary3
+psycopg
 urllib3
 python-dotenv
 asgiref
