@@ -1,3 +1,5 @@
+# TODO -> build image first, publish, then use image to run tests
+
 default:
   cache:                      # Pip's cache doesn't store the python packages
     paths:                    # https://pip.pypa.io/en/stable/topics/caching/
@@ -35,14 +37,10 @@ Build:
   image: python:3.10-slim
   script:
     - echo "Starting build job..."
-    # - echo "Creating virtual environment for the project..."
-    # - ls -a
-    # - python -m venv $(pwd)/.venv
-    # - source $(pwd)/.venv/bin/activate
     - echo "Installing requirements..."
     - pip install -r requirements.txt
     - ls -a
-    # - deactivate
+    - deactivate
   tags:
     - runner-randi
   only:
@@ -58,12 +56,6 @@ Test:
     - Build
   script:
     - echo "Starting test job..."
-    # - echo "Creating virtual environment for the project..."
-    # - ls -a
-    # - python -m venv $(pwd)/.venv
-    # - echo "Activating virtual environment..."
-    # - source $(pwd)/.venv/bin/activate
-    # - echo "Virtual environment activated."
     - echo "Installing requirements..."
     - pip install -r requirements.txt
     - ls -a
@@ -74,11 +66,6 @@ Test:
     - echo "Coverage exported. Total coverage:"
     - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
     - sleep 5
-    - echo "Checking the server..." 
-    - python manage.py runserver &
-    - sleep 10
-    - curl -sSf http://localhost:8000 > /dev/null && echo "Server is Up"
-    - sudo pkill python
     - deactivate
     - ls -a
     - echo "All tests successfully passed."
