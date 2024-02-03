@@ -16,14 +16,15 @@ stages:
 
 Build:
   stage: build
+  image: python:3.10-slim
   before_script:
     - echo $(pwd)
   script:
     - echo "Starting build job..."
     - echo "Creating virtual environment for the project..."
     - ls
-    - virtualenv $(pwd)/venv
-    - source $(pwd)/venv/bin/activate
+    - python -m venv $(pwd)/.venv
+    - source $(pwd)/.venv/bin/activate
     - echo "Installing requirements..."
     - pip install -r requirements.txt
     - ls
@@ -43,6 +44,7 @@ Build:
 
 Test:
   stage: test
+  image: python:3.10-slim
   dependencies:
     - Build
   script:
@@ -74,6 +76,9 @@ Test:
 
 Release:
   stage: release
+  image: docker:latest
+  services:
+    - docker:dind
   dependencies:
     - Build
   before_script:
