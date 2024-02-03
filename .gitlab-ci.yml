@@ -22,12 +22,12 @@ Build:
   script:
     - echo "Starting build job..."
     - echo "Creating virtual environment for the project..."
-    - ls
+    - ls -a
     - python -m venv $(pwd)/.venv
     - source $(pwd)/.venv/bin/activate
     - echo "Installing requirements..."
     - pip install -r requirements.txt
-    - ls
+    - ls -a
     - deactivate
   tags:
     - runner-randi
@@ -45,7 +45,7 @@ Test:
   script:
     - echo "Starting test job..."
     - echo "Activating virtual environment..."
-    - ls
+    - ls -a
     - source $(pwd)/.venv/bin/activate
     - echo "Running unit tests..."
     - coverage run -m unittest  # Run tests
@@ -60,7 +60,7 @@ Test:
     - curl -sSf http://localhost:8000 > /dev/null && echo "Server is Up"
     - sudo pkill python
     - deactivate
-    - ls
+    - ls -a
     - echo "All tests successfully passed."
   tags:
     - runner-randi
