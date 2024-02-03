@@ -1,3 +1,17 @@
+default:
+  cache:                      # Pip's cache doesn't store the python packages
+    paths:                    # https://pip.pypa.io/en/stable/topics/caching/
+      - .cache/pip
+  before_script:
+    - python -V               # Print out python version for debugging
+    - echo "Creating virtual environment for the project..."
+    - ls -al
+    - pip install virtualenv
+    - virtualenv venv
+    - echo "Activating virtual environment..."
+    - source venv/bin/activate
+    - echo "Virtual environment activated."
+
 variables:
   REGISTRY_USER: $REGISTRY_USER
   CONTAINER_NAME: $CONTAINER_NAME
@@ -6,6 +20,10 @@ variables:
   GCP_USERNAME: $GCP_USERNAME
   GCP_STATIC_IP: $GCP_STATIC_IP
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  cache:
+    paths:
+      - ~/.cache/pip/
+      - .venv/
 
 
 stages:
@@ -18,18 +36,15 @@ stages:
 Build:
   stage: build
   image: python:3.10-slim
-  cache:                      # Pip's cache doesn't store the python packages
-    paths:                    # https://pip.pypa.io/en/stable/topics/caching/
-      - .cache/pip
   before_script:
     - python -V
     - echo $(pwd)
   script:
     - echo "Starting build job..."
-    - echo "Creating virtual environment for the project..."
-    - ls -a
-    - python -m venv $(pwd)/.venv
-    - source $(pwd)/.venv/bin/activate
+    # - echo "Creating virtual environment for the project..."
+    # - ls -a
+    # - python -m venv $(pwd)/.venv
+    # - source $(pwd)/.venv/bin/activate
     - echo "Installing requirements..."
     - pip install -r requirements.txt
     - ls -a
@@ -49,17 +64,19 @@ Test:
     - Build
   script:
     - echo "Starting test job..."
-    - echo "Creating virtual environment for the project..."
-    - ls -a
-    - python -m venv $(pwd)/.venv
-    - echo "Activating virtual environment..."
-    - source $(pwd)/.venv/bin/activate
-    - echo "Virtual environment activated."
+    # - echo "Creating virtual environment for the project..."
+    # - ls -a
+    # - python -m venv $(pwd)/.venv
+    # - echo "Activating virtual environment..."
+    # - source $(pwd)/.venv/bin/activate
+    # - echo "Virtual environment activated."
+    - echo "Installing requirements..."
+    - pip install -r requirements.txt
     - ls -a
     - echo "Running unit tests..."
-    - coverage run -m unittest  # Run tests
+    - coverage run -m unittest          # Run tests
     - echo "Exporting results to htmlcov/coverage.html..."
-    - coverage html # Export result to html
+    - coverage html           # Export result to html
     - echo "Coverage exported. Total coverage:"
     - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
     - sleep 5
@@ -109,7 +126,7 @@ Deploy:
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
       docker run --name $CONTAINER_IMAGE -d -p 5000:8000"
-  only:
-    - master
   tags:
     - runner-randi
+  only:
+    - master
