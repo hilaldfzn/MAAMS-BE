@@ -64,7 +64,6 @@ Test:
     - deactivate
     - ls
     - echo "All tests successfully passed."
-  coverage: '<span class="pc_cov">\K[^<]+%'
   tags:
     - runner-randi
   only:
