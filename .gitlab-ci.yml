@@ -2,8 +2,8 @@
 # TODO -> differentiate deploy job for staging and production
 
 default:
-  cache:                      # Pip's cache doesn't store the python packages
-    paths:                    # https://pip.pypa.io/en/stable/topics/caching/
+  cache:                                            # Pip's cache doesn't store the python packages
+    paths:                                          # https://pip.pypa.io/en/stable/topics/caching/
       - $(pwd)/.cache/pip
 
 variables:
@@ -27,12 +27,42 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  
   GIT_DEPTH: "0"
+  WORKDIR: "/app"
 
 stages:
   - build
   - sonarcloud-check
   - test-image
   - deploy
+
+  
+# Test:
+#   stage: test
+#   image: python:3.10-slim
+#   dependencies:
+#     - Build
+#   before_script:
+#     - echo "Starting test job..." 
+#   script:
+#     - echo "Installing requirements..."
+#     - pip install -r requirements.txt
+#     - ls -a
+#     - echo "Running unit tests..."
+#     - coverage run -m unittest          # Run tests
+#     - echo "Exporting results to htmlcov/coverage.html..."
+#     - coverage html           # Export result to html
+#     - echo "Coverage exported. Total coverage:"
+#     - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
+#     - sleep 5
+#     - deactivate
+#     - ls -a
+#     - echo "All tests successfully ran."
+#   tags:
+#     - runner-randi
+#   only:
+#     - master
+#     - staging
+#     - ci-cd
 
 
 Build:
@@ -84,6 +114,7 @@ Test-Image:
   variables:
     CI_DEBUG_TRACE: "true"
   before_script:
+    - cd $WORKDIR
     - python -V                                                        # Print out python version for debugging
     - ls -a
     - echo "Verifying requirements..."
@@ -105,34 +136,6 @@ Test-Image:
     - master
     - staging
     - ci-cd
-
-  
-# Test:
-#   stage: test
-#   image: python:3.10-slim
-#   dependencies:
-#     - Build
-#   script:
-#     - echo "Starting test job..."
-#     - echo "Installing requirements..."
-#     - pip install -r requirements.txt
-#     - ls -a
-#     - echo "Running unit tests..."
-#     - coverage run -m unittest          # Run tests
-#     - echo "Exporting results to htmlcov/coverage.html..."
-#     - coverage html           # Export result to html
-#     - echo "Coverage exported. Total coverage:"
-#     - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
-#     - sleep 5
-#     - deactivate
-#     - ls -a
-#     - echo "All tests successfully ran."
-#   tags:
-#     - runner-randi
-#   only:
-#     - master
-#     - staging
-#     - ci-cd
 
 
 Deploy:
