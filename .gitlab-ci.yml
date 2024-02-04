@@ -5,16 +5,16 @@ default:
   cache:                      # Pip's cache doesn't store the python packages
     paths:                    # https://pip.pypa.io/en/stable/topics/caching/
       - $(pwd)/.cache/pip
-  before_script:
-    - python -V               # Print out python version for debugging
-    - echo "Creating virtual environment for the project..."
-    - ls -al
-    - pip install virtualenv
-    - virtualenv venv
-    - echo "Activating virtual environment..."
-    - source venv/bin/activate
-    - echo "Virtual environment activated."
-    - echo $(pwd)
+  # before_script:
+  #   - python -V               # Print out python version for debugging
+  #   - echo "Creating virtual environment for the project..."
+  #   - ls -al
+  #   - pip install virtualenv
+  #   - virtualenv venv
+  #   - echo "Activating virtual environment..."
+  #   - source venv/bin/activate
+  #   - echo "Virtual environment activated."
+  #   - echo $(pwd)
 
 variables:
   PRODUCTION: $PRODUCTION
@@ -69,6 +69,8 @@ Build:
   image: docker
   services:
     - docker:dind
+  before_script:
+    - echo "Building image..."
   script:
     - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
     - docker build --build-arg ENVIRONMENT=$STAGING --build-arg SECRET_KEY=$SECRET_KEY -t $CONTAINER_IMAGE .
@@ -106,6 +108,7 @@ Test-Image:
   stage: test-image
   image: $IMAGE_NAME:$IMAGE_TAG
   before_script:
+    - python -V                                                        # Print out python version for debugging
     - ls -a
     - echo "Verifying requirements..."
     - pip install -r requirements.txt
