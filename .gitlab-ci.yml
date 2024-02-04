@@ -32,7 +32,6 @@ stages:
   - build
   - sonarcloud-check
   - test-image
-  # - test
   - deploy
 
 
@@ -41,6 +40,8 @@ Build:
   image: docker
   services:
     - docker:dind
+  variables:
+    CI_DEBUG_TRACE: "true"
   before_script:
     - echo "Building image..."
   script:
@@ -80,6 +81,8 @@ Sonarcloud-Check:
 Test-Image:
   stage: test-image
   image: $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
+  variables:
+    CI_DEBUG_TRACE: "true"
   before_script:
     - python -V                                                        # Print out python version for debugging
     - ls -a
