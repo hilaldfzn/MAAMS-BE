@@ -47,23 +47,6 @@ stages:
   - deploy
 
 
-# Build:
-#   stage: build
-#   image: python:3.10-slim
-#   script:
-#     - echo "Starting build job..."
-#     - echo "Installing requirements..."
-#     - pip install -r requirements.txt
-#     - ls -a
-#     - deactivate
-#   tags:
-#     - runner-randi
-#   only:
-#     - master
-#     - staging
-#     - ci-cd
-
-
 Build:
   stage: build
   image: docker
@@ -107,7 +90,7 @@ Sonarcloud-Check:
 
 Test-Image:
   stage: test-image
-  image: $IMAGE_NAME:$IMAGE_TAG
+  image: maamsbe:latest
   before_script:
     - python -V                                                        # Print out python version for debugging
     - ls -a
