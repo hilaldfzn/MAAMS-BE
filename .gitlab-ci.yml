@@ -1,4 +1,3 @@
-# TODO -> alt: build image first, publish, then use image to run tests
 # TODO -> differentiate deploy job for staging and production
 
 default:
@@ -30,39 +29,47 @@ variables:
   WORKDIR: "/app"
 
 stages:
+  - test
   - build
   - sonarcloud-check
-  - test-image
   - deploy
 
   
-# Test:
-#   stage: test
-#   image: python:3.10-slim
-#   dependencies:
-#     - Build
-#   before_script:
-#     - echo "Starting test job..." 
-#   script:
-#     - echo "Installing requirements..."
-#     - pip install -r requirements.txt
-#     - ls -a
-#     - echo "Running unit tests..."
-#     - coverage run -m unittest          # Run tests
-#     - echo "Exporting results to htmlcov/coverage.html..."
-#     - coverage html           # Export result to html
-#     - echo "Coverage exported. Total coverage:"
-#     - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
-#     - sleep 5
-#     - deactivate
-#     - ls -a
-#     - echo "All tests successfully ran."
-#   tags:
-#     - runner-randi
-#   only:
-#     - master
-#     - staging
-#     - ci-cd
+Test:
+  stage: test
+  image: python:3.10-slim
+  before_script:
+    - python -V                                                       # Print out python version for debugging
+    - echo "Creating virtual environment for the project..."
+    - ls -al
+    - pip install virtualenv
+    - virtualenv venv
+    - echo "Activating virtual environment..."
+    - source venv/bin/activate
+    - echo "Virtual environment activated."
+    - echo $(pwd)
+    - echo "Starting test job..." 
+  script:
+    - echo "Installing requirements..."
+    - pip install -r requirements.txt
+    - ls -a
+    - echo "Running unit tests..."
+    - coverage run -m unittest                                          # Run tests
+    - echo "Exporting results to htmlcov/coverage.html..."
+    - coverage html                                                     # Export result to html
+    - echo "Coverage exported. Total coverage:"
+    - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
+    - sleep 5
+    - deactivate
+    - ls -a
+    - echo "All tests successfully ran."
+  coverage: '/Total.*?([0-9]{1,3})%/'
+  tags:
+    - runner-randi
+  only:
+    - master
+    - staging
+    - ci-cd
 
 
 Build:
@@ -108,20 +115,18 @@ Sonarcloud-Check:
     - ci-cd
 
 
-Test-Image:
-  stage: test-image
-  image: rayhanrandi10/maams-be
-  variables:
-    CI_DEBUG_TRACE: "true"
-  before_script:
-    - echo $(pwd)
+# Test-Image:
+#   stage: test-image
+#   image: rayhanrandi10/maams-be
+#   before_script:
+  #   - echo $(pwd)
   #   - cd $WORKDIR
   #   - python -V                                                        # Print out python version for debugging
   #   - ls -a
   #   - echo "Verifying requirements..."
   #   - pip install -r requirements.txt
   #   - echo "Running unit tests..."
-  script:
+  # script:
     # - coverage run -m unittest                                         # Run tests
     # - echo "Exporting results to htmlcov/coverage.html..."
     # - coverage html                                                    # Export result to html
@@ -129,14 +134,14 @@ Test-Image:
     # - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html    # Show coverage total
     # - sleep 5
     # - ls -a
-    - echo "All tests successfully ran."
-  coverage: '/Total.*?([0-9]{1,3})%/'
-  tags:
-    - runner-randi
-  only:
-    - master
-    - staging
-    - ci-cd
+  #   - echo "All tests successfully ran."
+  # coverage: '/Total.*?([0-9]{1,3})%/'
+  # tags:
+  #   - runner-randi
+  # only:
+  #   - master
+  #   - staging
+  #   - ci-cd
 
 
 Deploy:
