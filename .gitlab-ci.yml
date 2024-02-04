@@ -75,7 +75,6 @@ Build:
     - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
   tags:
     - runner-randi
-    - dind
   only:
     - master
     - staging
