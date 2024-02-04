@@ -120,6 +120,12 @@ Test-Image:
     - ls -a
     - echo "All tests successfully ran."
   coverage: '/Total.*?([0-9]{1,3})%/'
+  tags:
+    - runner-randi
+  only:
+    - master
+    - staging
+    - ci-cd
 
   
 # Test:
