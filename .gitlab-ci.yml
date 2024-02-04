@@ -110,10 +110,11 @@ Sonarcloud-Check:
 
 Test-Image:
   stage: test-image
-  image: $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
+  image: rayhanrandi10/maams-be
   variables:
     CI_DEBUG_TRACE: "true"
-  # before_script:
+  before_script:
+    - echo $(pwd)
   #   - cd $WORKDIR
   #   - python -V                                                        # Print out python version for debugging
   #   - ls -a
@@ -146,7 +147,7 @@ Deploy:
     - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $GCP_USERNAME@GCP_STATIC_IP "
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
-      docker run --name $CONTAINER_IMAGE -d -p 80:8000"
+      docker run --name $CONTAINER_IMAGE -d -p 80:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG""
   tags:
     - runner-randi
   only:
