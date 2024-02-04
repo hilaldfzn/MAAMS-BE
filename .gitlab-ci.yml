@@ -72,8 +72,9 @@ Build:
   before_script:
     - echo "Building image..."
   script:
+    - ls -a
     - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
-    - docker build --build-arg ENVIRONMENT=$STAGING --build-arg SECRET_KEY=$SECRET_KEY -t $CONTAINER_IMAGE .
+    - docker build --build-arg ENVIRONMENT=$STAGING --build-arg SECRET_KEY=$SECRET_KEY -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
     - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
   tags:
     - runner-randi
