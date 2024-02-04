@@ -117,8 +117,6 @@ Build-Production:
 
 Sonarcloud-Check:
   stage: sonarcloud-check
-  dependencies:
-    - Build
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
@@ -152,6 +150,7 @@ Deploy-Staging:
 
 Deploy-Production:
   stage: deploy
+  image: alpine:latest
   before_script:
     - chmod 400 $SSH_KEY_PROD
     - apk update && apk add openssh-client
