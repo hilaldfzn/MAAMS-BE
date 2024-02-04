@@ -1,4 +1,4 @@
-# TODO -> differentiate deploy job for staging and production
+# TODO -> differentiate build & deploy job for staging and production
 
 default:
   cache:                                            # Pip's cache doesn't store the python packages
@@ -13,6 +13,8 @@ variables:
   CONTAINER_NAME: $CONTAINER_NAME
   IMAGE_NAME: $IMAGE_NAME
   IMAGE_TAG: $IMAGE_TAG
+  SSH_KEY_PROD: $SSH_KEY_PROD
+  SSH_KEY_STAGING: $SSH_KEY_STAGING
   GCP_USERNAME_PROD: $GCP_USERNAME_PROD
   GCP_STATIC_IP_PROD: $GCP_STATIC_IP_PROD
   GCP_USERNAME_STAGING: $GCP_USERNAME_STAGING
@@ -39,7 +41,7 @@ Test:
   stage: test
   image: python:3.10-slim
   before_script:
-    - python -V                                                       # Print out python version for debugging
+    - python -V                                                         # Print out python version for debugging
     - echo "Creating virtual environment for the project..."
     - ls -al
     - pip install virtualenv
@@ -72,7 +74,7 @@ Test:
     - ci-cd
 
 
-Build:
+Build-Staging:
   stage: build
   image: docker
   services:
@@ -89,9 +91,28 @@ Build:
   tags:
     - dind
   only:
-    - master
     - staging
     - ci-cd
+
+
+Build-Production:
+  stage: build
+  image: docker
+  services:
+    - docker:dind
+  variables:
+    CI_DEBUG_TRACE: "true"
+  before_script:
+    - echo "Building image..."
+  script:
+    - ls -a
+    - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
+    - docker build --build-arg ENVIRONMENT=$PRODUCTION --build-arg SECRET_KEY=$SECRET_KEY -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
+    - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
+  tags:
+    - dind
+  only:
+    - master
 
 
 Sonarcloud-Check:
@@ -109,50 +130,36 @@ Sonarcloud-Check:
     - sonar-scanner
   tags:
     - runner-randi
+
+
+Deploy-Staging:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - chmod 400 $SSH_KEY_STAGING
+    - apk update && apk add openssh-client
+  script:
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY_STAGING $GCP_USERNAME_STAGING@GCP_STATIC_IP_STAGING "
+      docker container rm -f $CONTAINER_NAME || true &&
+      docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
+      docker run --name $CONTAINER_IMAGE -d -p 80:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
+  tags:
+    - runner-randi
   only:
-    - master
     - staging
     - ci-cd
 
 
-# Test-Image:
-#   stage: test-image
-#   image: rayhanrandi10/maams-be
-#   before_script:
-  #   - echo $(pwd)
-  #   - cd $WORKDIR
-  #   - python -V                                                        # Print out python version for debugging
-  #   - ls -a
-  #   - echo "Verifying requirements..."
-  #   - pip install -r requirements.txt
-  #   - echo "Running unit tests..."
-  # script:
-    # - coverage run -m unittest                                         # Run tests
-    # - echo "Exporting results to htmlcov/coverage.html..."
-    # - coverage html                                                    # Export result to html
-    # - echo "Coverage exported. Total coverage:"
-    # - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html    # Show coverage total
-    # - sleep 5
-    # - ls -a
-  #   - echo "All tests successfully ran."
-  # coverage: '/Total.*?([0-9]{1,3})%/'
-  # tags:
-  #   - runner-randi
-  # only:
-  #   - master
-  #   - staging
-  #   - ci-cd
-
-
-Deploy:
+Deploy-Production:
   stage: deploy
   before_script:
-    - chmod 400 $SSH_KEY
+    - chmod 400 $SSH_KEY_PROD
+    - apk update && apk add openssh-client
   script:
-    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $GCP_USERNAME@GCP_STATIC_IP "
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PROD $GCP_USERNAME_PROD@GCP_STATIC_IP_PROD "
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
-      docker run --name $CONTAINER_IMAGE -d -p 80:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG""
+      docker run --name $CONTAINER_IMAGE -d -p 80:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
   tags:
     - runner-randi
   only:
