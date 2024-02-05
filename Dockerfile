@@ -5,6 +5,7 @@ EXPOSE 8000
 # Argument variables
 ARG ENVIRONMENT
 ARG SECRET_KEY
+ARG DEBUG
 ARG DB_HOST
 ARG DB_NAME
 ARG DB_PORT
@@ -14,14 +15,13 @@ ARG DB_PASSWORD
 # Required environment variables as build arguments here
 ENV ENVIRONMENT ${ENVIRONMENT}
 ENV SECRET_KEY ${SECRET_KEY}
+ENV DEBUG ${DEBUG}
 ENV DB_HOST ${DB_HOST}
 ENV DB_NAME ${DB_NAME}
 ENV DB_PORT ${DB_PORT}
 ENV DB_USER ${DB_USER}
 ENV DB_PASSWORD ${DB_PASSWORD}
 
-# Misc. variables
-ENV DEBUG=False
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
