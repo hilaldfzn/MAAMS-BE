@@ -131,13 +131,8 @@ Deploy-Staging:
   stage: deploy
   image: alpine:latest
   before_script:
-    # - echo "$SSH_KEY_STAGING"
-    # - ls -a
-    # - echo "$SSH_KEY_STAGING" > ssh_key.pem
-    # - ls -a
     - cat "$SSH_KEY_STAGING"
     - chmod 400 "$SSH_KEY_STAGING"
-    # - cat ssh_key.pem
     - apk update && apk add openssh-client
   script:
     - ssh -v -o StrictHostKeyChecking=no -i "$SSH_KEY_STAGING" $GCP_USERNAME_STAGING@$GCP_STATIC_IP_STAGING "
