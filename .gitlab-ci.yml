@@ -13,8 +13,6 @@ variables:
   CONTAINER_NAME: $CONTAINER_NAME
   IMAGE_NAME: $IMAGE_NAME
   IMAGE_TAG: $IMAGE_TAG
-  SSH_KEY_PROD: $SSH_KEY_PROD
-  SSH_KEY_STAGING: $SSH_KEY_STAGING
   GCP_USERNAME_PROD: $GCP_USERNAME_PROD
   GCP_STATIC_IP_PROD: $GCP_STATIC_IP_PROD
   GCP_USERNAME_STAGING: $GCP_USERNAME_STAGING
@@ -133,9 +131,9 @@ Deploy-Staging:
   stage: deploy
   image: alpine:latest
   before_script:
-    - echo $SSH_KEY_STAGING
+    - echo "$SSH_KEY_STAGING"
     - ls -a
-    - echo $SSH_KEY_STAGING > ssh_key.pem
+    - echo "$SSH_KEY_STAGING" > ssh_key.pem
     - ls -a
     - chmod 400 ssh_key.pem
     - cat ssh_key.pem
