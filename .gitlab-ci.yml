@@ -137,7 +137,7 @@ Deploy-Staging:
     - ls -a
     - chmod 400 ssh_key.pem
   script:
-    - ssh -o StrictHostKeyChecking=no -i ssh_key.pem $GCP_USERNAME_STAGING@GCP_STATIC_IP_STAGING "
+    - ssh -o StrictHostKeyChecking=no -i ssh_key.pem $GCP_USERNAME_STAGING@$GCP_STATIC_IP_STAGING "
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
       docker run --name $CONTAINER_IMAGE -d -p 80:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
