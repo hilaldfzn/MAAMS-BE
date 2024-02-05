@@ -133,10 +133,9 @@ Deploy-Staging:
   stage: deploy
   image: alpine:latest
   before_script:
-    - echo "$SSH_KEY_STAGING"
-    - echo '$SSH_KEY_STAGING'
+    - echo $SSH_KEY_STAGING
     - ls -a
-    - echo "$SSH_KEY_STAGING" > ssh_key.pem
+    - echo $SSH_KEY_STAGING > ssh_key.pem
     - ls -a
     - chmod 400 ssh_key.pem
     - cat ssh_key.pem
