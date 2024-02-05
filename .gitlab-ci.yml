@@ -133,7 +133,9 @@ Deploy-Staging:
   stage: deploy
   before_script:
     - ls -a
-    - chmod 400 $SSH_KEY_STAGING
+    - echo "$SSH_KEY_STAGING" > ssh_key.pem
+    - ls -a
+    - chmod 400 ssh_key.pem
   script:
     - ssh -o StrictHostKeyChecking=no -i $SSH_KEY_STAGING $GCP_USERNAME_STAGING@GCP_STATIC_IP_STAGING "
       docker container rm -f $CONTAINER_NAME || true &&
