@@ -12,6 +12,52 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 
+
+# Setup environment variables.
+# Production & staging environment variables will be stored on Dockerfile
+# and will be populated through pipeline using CI/CD variables as args.
+import os
+from dotenv import load_dotenv, find_dotenv
+from django.core.exceptions import ImproperlyConfigured
+
+# Load current environment if .env file exists
+env_file = find_dotenv(
+     filename=".env",
+     raise_error_if_not_found=False,
+     usecwd=False
+)
+if env_file:
+    load_dotenv(env_file, verbose=True)
+active_env = str(os.environ["ENVIRONMENT"])
+# If a new environment is added,
+# check here to load .env file if file is present.
+if active_env == 'DEVELOPMENT':
+        load_dotenv('./.env.dev')
+ 
+def get_env_value(env_variable: str) -> str | int | bool | None:
+    """
+    Gets environment variables depending on active environment.
+    """
+    try:
+        value = parse_env_value(os.environ[env_variable])
+        return value
+    except KeyError:
+        error_msg = f'{env_variable} environment variable not set.'
+        raise ImproperlyConfigured(error_msg)
+
+def parse_env_value(value: str) -> str | bool | int | None:
+    """
+    Parses environment variable into either bool, strings, ints, or None type.
+    """
+    value = value.lower()
+    if value == "none": return None             # Checks for None type
+    if value in ["0", "false"]: return False    # Checks for bool types
+    if value in ["1", "true"]: return True
+    if value.isnumeric(): return int(value)     # Checks for int types
+    # Return string if none of the above type matches
+    return value                                
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,12 +66,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+x7a#te49@!xq3*j!y(r#di0ig)0v-_g33&qoro@kfpx#tehdm'
+SECRET_KEY = get_env_value("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = get_env_value("DEBUG")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['34.87.36.56', 'localhost']
 
 
 # Application definition
@@ -37,6 +83,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -72,7 +119,6 @@ WSGI_APPLICATION = 'maams_be.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

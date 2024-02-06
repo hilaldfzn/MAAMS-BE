@@ -1,7 +1,16 @@
 # MAAMS (PBL Plus)
 
+Production
+[![Production](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/badges/main/pipeline.svg)](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/-/pipelines?ref=main)
+
+Staging
+[![Staging](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/badges/ci-cd/pipeline.svg)](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/-/pipelines?ref=staging)
+
+Code Coverage
+[![Code Coverage](https://sonarcloud.io/api/project_badges/measure?project=maams-ppl_maams-be&metric=coverage)](https://sonarcloud.io/summary/new_code?id=maams-ppl_maams-be)
+
 **Kelompok-2 PPL C**
-### Anggota
+### Members
 1. 2106752306 Adly Renadi Raksanagara
 2. 2106638324 Naila Shafirni Hidayat
 3. 2106750313 Raditya Aditama
@@ -15,3 +24,7 @@
 - Metode untuk menelusuri sebab-musabab paling awal/dalam suatu masalah dan memberikan solusi yang mendasar. (Terutama keadaan bermasalah yang akan dipulihkan atau dinormalkan, bukan dilipatgandakan).
 - Sejenis Root Cause Analysis
 - Inspirasi konseptual menyusun MAAMS ini berasal dari analisis Aristoteles tentang kekhususan filsafat yakni “mencari sebab-sebab yang terdalam dari seluruh realitas” (Lorens Bagus, 1991).
+
+### Links
+- [API Staging](http://34.87.36.56/)
+- [API Prod](http://34.143.155.67/)

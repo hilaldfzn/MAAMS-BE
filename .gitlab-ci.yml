@@ -1,0 +1,163 @@
+# TODO -> differentiate build & deploy job for staging and production
+
+default:
+  cache:                                            # Pip's cache doesn't store the python packages
+    paths:                                          # https://pip.pypa.io/en/stable/topics/caching/
+      - $(pwd)/.cache/pip
+
+variables:
+  PRODUCTION: $PRODUCTION
+  STAGING: $STAGING
+  SECRET_KEY: $SECRET_KEY
+  REGISTRY_USER: $REGISTRY_USER
+  CONTAINER_NAME: $CONTAINER_NAME
+  IMAGE_NAME: $IMAGE_NAME
+  IMAGE_TAG: $IMAGE_TAG
+  GCP_USERNAME_PROD: $GCP_USERNAME_PROD
+  GCP_STATIC_IP_PROD: $GCP_STATIC_IP_PROD
+  GCP_USERNAME_STAGING: $GCP_USERNAME_STAGING
+  GCP_STATIC_IP_STAGING: $GCP_STATIC_IP_STAGING
+  DB_HOST_STAGING: $DB_HOST_STAGING
+  DB_NAME_STAGING: $DB_NAME_STAGING
+  DB_PORT_STAGING: $DB_PORT_STAGING
+  DB_USER_STAGING: $DB_USER_STAGING
+  DB_PASSWORD_STAGING: $DB_PASSWORD_STAGING
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  
+  GIT_DEPTH: "0"
+  WORKDIR: "/app"
+
+stages:
+  - test
+  - build
+  - sonarcloud-check
+  - deploy
+
+  
+Test:
+  stage: test
+  image: python:3.10-slim
+  before_script:
+    - python -V                                                         # Print out python version for debugging
+    - echo "Creating virtual environment for the project..."
+    - ls -al
+    - pip install virtualenv
+    - virtualenv venv
+    - echo "Activating virtual environment..."
+    - source venv/bin/activate
+    - echo "Virtual environment activated."
+    - echo $(pwd)
+    - echo "Starting test job..." 
+  script:
+    - echo "Installing requirements..."
+    - pip install -r requirements.txt
+    - ls -a
+    - echo "Running unit tests..."
+    - coverage run -m unittest                                          # Run tests
+    - echo "Exporting results to htmlcov/coverage.html..."
+    - coverage html                                                     # Export result to html
+    - echo "Coverage exported. Total coverage:"
+    - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
+    - sleep 5
+    - deactivate
+    - ls -a
+    - echo "All tests successfully ran."
+  coverage: '/Total.*?([0-9]{1,3})%/'
+  tags:
+    - runner-randi
+  only:
+    - master
+    - staging
+    - ci-cd
+
+
+Build-Staging:
+  stage: build
+  image: docker
+  services:
+    - docker:dind
+  variables:
+    CI_DEBUG_TRACE: "true"
+  before_script:
+    - echo "Building image..."
+  script:
+    - ls -a
+    - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
+    - docker build --build-arg ENVIRONMENT=$STAGING --build-arg SECRET_KEY=$SECRET_KEY --build-arg DEBUG=True --build-arg DB_HOST=$DB_HOST_STAGING --build-arg DB_NAME=$DB_NAME_STAGING --build-arg DB_PORT=$DB_PORT_STAGING --build-arg DB_USER=$DB_USER_STAGING --build-arg DB_PASSWORD=$DB_PASSWORD_STAGING -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
+    - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
+  tags:
+    - dind
+  only:
+    - staging
+    - ci-cd
+
+
+Build-Production:
+  stage: build
+  image: docker
+  services:
+    - docker:dind
+  variables:
+    CI_DEBUG_TRACE: "true"
+  before_script:
+    - echo "Building image..."
+  script:
+    - ls -a
+    - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
+    - docker build --build-arg ENVIRONMENT=$PRODUCTION --build-arg SECRET_KEY=$SECRET_KEY -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
+    - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
+  tags:
+    - dind
+  only:
+    - master
+
+
+Sonarcloud-Check:
+  stage: sonarcloud-check
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  tags:
+    - runner-randi
+
+
+Deploy-Staging:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - cat "$SSH_KEY_STAGING"
+    - chmod 400 "$SSH_KEY_STAGING"
+    - apk update && apk add openssh-client
+  script:
+    - ssh -v -o StrictHostKeyChecking=no -i "$SSH_KEY_STAGING" $GCP_USERNAME_STAGING@$GCP_STATIC_IP_STAGING "
+      docker container rm -f $CONTAINER_NAME || true &&
+      docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
+      docker run --name $CONTAINER_NAME -d -p 80:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
+  tags:
+    - runner-randi
+  only:
+    - staging
+    - ci-cd
+
+
+Deploy-Production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - chmod 400 $SSH_KEY_PROD
+    - apk update && apk add openssh-client
+  script:
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PROD $GCP_USERNAME_PROD@$GCP_STATIC_IP_PROD "
+      docker container rm -f $CONTAINER_NAME || true &&
+      docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
+      docker run --name $CONTAINER_NAME -d -p 80:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
+  tags:
+    - runner-randi
+  only:
+    - master
