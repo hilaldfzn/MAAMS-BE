@@ -51,8 +51,6 @@ Test:
   script:
     - echo "Installing requirements..."
     - pip install -r requirements.txt
-    - echo "migrate..."
-    - python manage.py migrate
     - ls -a
     - echo "Running unit tests..."
     - coverage run -m unittest                                          # Run tests
