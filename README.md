@@ -4,6 +4,8 @@
 
 [![Deployment for Prod](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/badges/main/pipeline.svg)](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/-/pipelines?ref=main)
 
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=maams-ppl_maams-be&metric=coverage)](https://sonarcloud.io/summary/new_code?id=maams-ppl_maams-be)
+
 **Kelompok-2 PPL C**
 ### Anggota
 1. 2106752306 Adly Renadi Raksanagara
