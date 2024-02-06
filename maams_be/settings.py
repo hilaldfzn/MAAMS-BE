@@ -120,15 +120,14 @@ WSGI_APPLICATION = 'maams_be.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-# TODO: integrate postgres
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': get_env_value('DB_NAME'),
+        'USER': get_env_value('DB_USER'),
+        'PASSWORD': get_env_value('DB_PASSWORD'),
+        'HOST': get_env_value('DB_HOST'),
+        'PORT': get_env_value('DB_PORT'),
         'TEST': {
              'MIRROR': 'default',
         },
