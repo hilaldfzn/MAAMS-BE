@@ -1,5 +1,9 @@
 # MAAMS (PBL Plus)
 
+[![Deployment for Staging](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/badges/ci-cd/pipeline.svg)](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/-/pipelines?ref=ci-cd)
+
+[![Deployment for Prod](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/badges/main/pipeline.svg)](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/-/pipelines?ref=main)
+
 **Kelompok-2 PPL C**
 ### Anggota
 1. 2106752306 Adly Renadi Raksanagara
