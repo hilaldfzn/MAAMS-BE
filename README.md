@@ -1,16 +1,9 @@
 # MAAMS (PBL Plus)
 
-Deployment for Staging
+[![Production](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/badges/main/pipeline.svg)](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/-/pipelines?ref=main)
+[![Staging](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/badges/ci-cd/pipeline.svg)](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/-/pipelines?ref=staging)
 
-[![Deployment for Staging](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/badges/ci-cd/pipeline.svg)](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/-/pipelines?ref=ci-cd)
-
-Deployment for Production/Release
-
-[![Deployment for Prod](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/badges/main/pipeline.svg)](https://gitlab.cs.ui.ac.id/maams-ppl/maams-be/-/pipelines?ref=main)
-
-Coverage
-
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=maams-ppl_maams-be&metric=coverage)](https://sonarcloud.io/summary/new_code?id=maams-ppl_maams-be)
+[![Code Coverage](https://sonarcloud.io/api/project_badges/measure?project=maams-ppl_maams-be&metric=coverage)](https://sonarcloud.io/summary/new_code?id=maams-ppl_maams-be)
 
 **Kelompok-2 PPL C**
 ### Members
