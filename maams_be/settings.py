@@ -84,8 +84,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'validator'
+    'drf_spectacular',
+    'validator',
 ]
+
+# Django REST Framework configurations
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -96,6 +102,14 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# DRF-Spectacular configurations, OpenAPI3 schema generator
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MAAMS-BE',
+    'DESCRIPTION': 'Backend API documentation for MAAMS.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 ROOT_URLCONF = 'maams_be.urls'
 
