@@ -72,14 +72,16 @@
     DB_SCHEMA=maams
     ```
 
-4. Initialize database tables
+4. Create `maams` schema in local PostgreSQL server either through pgAdmin4 or CLI
+
+5. Initialize database tables
 
     ```pwsh
     python manage.py makemigrations
     python manage.py migrate
     ```
 
-5. Run local server
+6. Run local server
 
     ```pwsh
     python manage.py runserver
