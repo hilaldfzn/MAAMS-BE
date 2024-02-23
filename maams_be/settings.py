@@ -71,7 +71,7 @@ SECRET_KEY = get_env_value("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = get_env_value("DEBUG")
 
-ALLOWED_HOSTS = ['34.87.36.56', 'localhost']
+ALLOWED_HOSTS = get_env_value("ALLOWED_HOSTS").split(",")
 
 
 # Application definition
@@ -122,8 +122,15 @@ WSGI_APPLICATION = 'maams_be.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': get_env_value("DB_NAME"),
+        'USER': get_env_value("DB_USER"),
+        'PASSWORD': get_env_value("DB_PASSWORD"),
+        'HOST': get_env_value("DB_HOST"),
+        'PORT': get_env_value("DB_PORT"),
+        'OPTIONS': {
+            'options': f'-c search_path={get_env_value("DB_SCHEMA")}',
+        }
     }
 }
 
