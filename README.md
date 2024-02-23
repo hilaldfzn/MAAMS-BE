@@ -102,3 +102,27 @@
     # or
     coverage xml
     ```
+
+## API Documentation (OAS 3.0)
+
+### Postman
+
+1. Download OpenAPI YAML schema by accessing the following endpoint:
+
+    ```url
+    localhost:8000/api/v1/schema/
+    ```
+
+2. Import downloaded YAML schema into Postman workspace.
+
+3. For endpoints that require authorization, make sure to get access token first by logging in and input token to Bearer Token auth type.
+
+### Swagger
+
+1. Directly access the following endpoint:
+
+   ```url
+   localhost:8000/api/v1/schema/swagger-ui/
+   ```
+
+2. For endpoints that require authorization, log in first then input access token into the authorization setting at the top right corner of the page.
