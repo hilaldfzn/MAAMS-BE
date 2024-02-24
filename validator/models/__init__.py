@@ -1,2 +1,1 @@
-# TODO: uncomment when question model already implemented
-# from .question import ...
+from .question import Question
