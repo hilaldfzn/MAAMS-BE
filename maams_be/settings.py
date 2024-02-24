@@ -86,11 +86,24 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'validator',
+    'access_token',
 ]
 
 # Django REST Framework configurations
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# JWT access token properties
+# https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
 MIDDLEWARE = [
@@ -142,9 +155,6 @@ DATABASES = {
         'PASSWORD': get_env_value("DB_PASSWORD"),
         'HOST': get_env_value("DB_HOST"),
         'PORT': get_env_value("DB_PORT"),
-        'OPTIONS': {
-            'options': f'-c search_path={get_env_value("DB_SCHEMA")}',
-        }
     }
 }
 
