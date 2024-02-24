@@ -43,10 +43,11 @@
 2. Install required packages
 
     ```pwsh
-    pip install -r requirements.txt
-    ```
+    pip install -r requirements.txt  ```
 
-3. Create `.env` and `.env.dev` file to specify active development environment variables.
+4. Create new database in local PostgreSQL server either through pgAdmin4 or CLI
+
+5. Create `.env` and `.env.dev` file to specify active development environment variables.
 
     `.env`:
 
@@ -64,15 +65,12 @@
     DEBUG=True
 
     # Database credentials
-    DB_HOST=localhost
-    DB_PORT=5432
-    DB_USER=postgres
-    DB_PASSWORD=postgres
-    DB_NAME=postgres
-    DB_SCHEMA=maams
+    DB_HOST=<your local DB Host>
+    DB_PORT=<your local DB port>
+    DB_USER=<your local DB username>
+    DB_PASSWORD=<your local DB password>
+    DB_NAME=<your local DB name>
     ```
-
-4. Create `maams` schema in local PostgreSQL server either through pgAdmin4 or CLI
 
 5. Initialize database tables
 
@@ -92,10 +90,16 @@
 1. Run `coverage` package testing library
 
     ```pwsh
-    coverage run -m unittest
+    coverage run manage.py test
     ```
 
-2. Export testing results to HTML/XML
+2. See coverage report
+
+    ```pwsh
+    coverage report
+    ```
+
+3. Export testing results to HTML/XML
 
     ```pwsh
     coverage html
