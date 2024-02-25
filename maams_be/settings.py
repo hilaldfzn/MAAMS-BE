@@ -32,7 +32,9 @@ active_env = str(os.environ["ENVIRONMENT"])
 # If a new environment is added,
 # check here to load .env file if file is present.
 if active_env == 'DEVELOPMENT':
-        load_dotenv('./.env.dev')
+    load_dotenv('./.env.dev')
+elif active_env == 'TESTING':
+    load_dotenv('./.env.test')
  
 def get_env_value(env_variable: str) -> str | int | bool | None:
     """
