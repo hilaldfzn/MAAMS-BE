@@ -4,6 +4,7 @@ from django.urls import reverse
 from validator.models.question import Question
 from validator.serializers import QuestionRequest, QuestionResponse
 import uuid
+from validator.models.question import Question
 
 class QuestionViewTest(APITestCase):
     def setUp(self):
@@ -11,16 +12,16 @@ class QuestionViewTest(APITestCase):
         self.question_uuid = uuid.uuid4()
 
         # TODO: Add user to the field
-        self.valid_data = {'question': 'Test question', 'mode': 'pribadi'}
+        self.valid_data = {'question': 'Test question', 'mode': Question.ModeChoices.PRIBADI}
         self.invalid_data_missing = {'question': 'Test question', 'mode': ''}
         self.invalid_data = {'question': 'Test question', 'mode': 'bohong'}
-        self.valid_data_put = {'mode': 'pengawasan'}
+        self.valid_data_put = {'mode': Question.ModeChoices.PENGAWASAN}
         self.invalid_data_put = {'id': self.question_uuid, 'mode': 'bohong'}
         self.invalid_data_put_missing = {'id': self.question_uuid, 'mode': ''}
 
         Question.objects.create(
             # TODO: Add user to the field
-            id=self.question_uuid, question='pertanyaan1', mode='pribadi'
+            id=self.question_uuid, question='pertanyaan1', mode=Question.ModeChoices.PRIBADI
         )
         
     def test_get_question(self):
@@ -69,7 +70,7 @@ class QuestionViewTest(APITestCase):
         updated_question = Question.objects.get(pk=self.question_uuid)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(updated_question.mode, "pengawasan")
+        self.assertEqual(updated_question.mode, Question.ModeChoices.PENGAWASAN)
         
     def test_put_question_invalid_value(self):
         url = reverse('validator:put_question', kwargs={'pk': self.question_uuid})
