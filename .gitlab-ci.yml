@@ -76,11 +76,6 @@ Test:
   coverage: '/Total.*?([0-9]{1,3})%/'
   tags:
     - runner-randi
-  only:
-    - master
-    - staging
-    - development
-    - ci-cd
 
 
 Build-Staging:
