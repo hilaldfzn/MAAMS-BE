@@ -94,6 +94,17 @@ class LoginViewTest(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_login_with_valid_user_password_mismatch(self):
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                "username": "test-username",
+                "password": "invalid-password"
+            }),
+            content_type=self.content_type
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_login_with_missing_params_raises_exception(self):
         response = self.client.post(
             self.url,
