@@ -161,6 +161,8 @@ DATABASES = {
     }
 }
 
+# Set default auth model to Custom User
+AUTH_USER_MODEL = 'authentication.CustomUser'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
