@@ -20,13 +20,6 @@ from .serializers import (
 )
 
 
- # to check if login successful for testing purposes
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def protected_view(request):
-    return Response({ "detail": "This is an example protected view." })
-
-
 @extend_schema(
     description='Fill with valid username and password for an existing user.',
     request=LoginRequestSerializer,
@@ -39,15 +32,23 @@ def login(request):
     """
     if request.method == 'POST':
 
-        username = request.data['username']
-        password = request.data['password']
+        try:
+            username = request.data['username']
+            password = request.data['password']
 
-        user = get_object_or_404(
-            CustomUser,
-            username=username
-        )
-        # Check if password does not match
-        if not check_password(password, user.password):
+            user = get_object_or_404(
+                CustomUser,
+                username=username
+            )
+            # Check if password does not match
+            if not check_password(password, user.password):
+                raise AuthenticationFailed()
+            
+        # If request parameters are missing
+        except KeyError:
+            raise ParseError
+        # If credentials are invalid
+        except Http404:
             raise AuthenticationFailed()
         
         serializer = CustomUserSerializer(user)
