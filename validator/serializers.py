@@ -21,5 +21,7 @@ class QuestionResponse(BaseQuestion):
     
     id = serializers.UUIDField()
     question = serializers.CharField()
-    created_at = serializers.DateTimeField()    
+    created_at = serializers.DateTimeField()
+    username = serializers.CharField()
+    
 

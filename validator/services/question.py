@@ -3,12 +3,19 @@ from authentication.models import CustomUser
 import uuid
 from django.core.exceptions import ObjectDoesNotExist
 from validator.exceptions import NotFoundRequestException, ForbiddenRequestException
+from validator.dataclasses.create_question import CreateQuestionDataClass 
 
 class QuestionService():
     def create(user: CustomUser, question: str, mode: str):
-        question = Question.objects.create(user=user, question=question, mode=mode)
+        questionObject = Question.objects.create(user=user, question=question, mode=mode)
         
-        return question
+        return CreateQuestionDataClass(
+            username = questionObject.user.username,
+            id = questionObject.id,
+            question = questionObject.question,
+            created_at = questionObject.created_at,
+            mode = questionObject.mode
+        )
     
     def get(user:CustomUser, pk:uuid):
         try:
@@ -19,13 +26,10 @@ class QuestionService():
         user_id = question.user.uuid
         
         if user.uuid != user_id:
-            if user.is_superuser == True and question.mode != Question.ModeChoices.PENGAWASAN:
-                raise ForbiddenRequestException("User not permitted to view this resource")
-        # TODO: Check user and mode
-        # if user not the same as the creator, check if the user an admin
-        # if admin, check if mode == pengawasan
-        # raise ForbiddenRequestException("User not permitted to view this resource")
-        return question
+            if user.is_superuser == True and question.mode == Question.ModeChoices.PENGAWASAN:
+                return question
+        else:
+            raise ForbiddenRequestException("User not permitted to view this resource")
 
     def update_mode(user:CustomUser, mode:str, pk:uuid):
         try:
@@ -33,8 +37,11 @@ class QuestionService():
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Analisis tidak ditemukan")
         
-        # TODO: Check user
-        # raise ForbiddenRequestException("User not permitted to update this resource")
+        user_id = question.user.uuid
+
+        if user.uuid != user_id:
+            raise ForbiddenRequestException("User not permitted to update this resource")
+        
         question.mode = mode
         question.save()
         

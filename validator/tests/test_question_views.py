@@ -5,7 +5,7 @@ from django.urls import reverse
 from validator.models.question import Question
 from authentication.models import CustomUser
 from authentication.serializers import CustomUserSerializer
-from validator.serializers import QuestionRequest, QuestionResponse, BaseQuestion
+from validator.serializers import QuestionRequest, BaseQuestion
 import uuid
 
 class QuestionViewTest(APITestCase):
@@ -13,21 +13,19 @@ class QuestionViewTest(APITestCase):
         """
         Set Up objects
         """
-        self.client = self.client_class()
         self.question_uuid = uuid.uuid4()
         self.question_uuid2 = uuid.uuid4()
         
         # users
         self.user_uuid1 = uuid.uuid4()
-        self.user1 = CustomUser.objects.create(
-            uuid=self.user_uuid1,
+        self.user1 = CustomUser(
             username="test-username",
-            password="test-password",
             email="test@email.com"
         )
+        self.user1.set_password('test-password')
+        self.user1.save()
         self.user_data1 = CustomUserSerializer(self.user1).data
 
-        
         self.user_uuid2 = uuid.uuid4()
         self.user2 = CustomUser.objects.create(
             uuid=self.user_uuid2,
@@ -80,11 +78,14 @@ class QuestionViewTest(APITestCase):
             'password': 'test-password'
         }
         
-        self.client.post(
+        response_login = self.client.post(
             self.url_login,
             data=json.dumps(self.valid_credentials_login),
             content_type=self.content_type_login
         )
+        
+        self.assertEqual(
+            response_login.status_code, status.HTTP_200_OK)
         
     def test_get_question(self):
         url = reverse('validator:get_question', kwargs={'pk': self.question_uuid})
