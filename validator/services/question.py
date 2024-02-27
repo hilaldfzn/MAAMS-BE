@@ -23,4 +23,14 @@ class QuestionService():
         return question
 
     def update_mode(mode:str, pk:uuid):
-      return ""
+        try:
+            question = Question.objects.get(pk=pk)
+        except ObjectDoesNotExist:
+            raise NotFoundRequestException("Analisis tidak ditemukan")
+        
+        # TODO: Check user
+        # raise ForbiddenRequestException("User not permitted to update this resource")
+        question.mode = mode
+        question.save()
+        
+        return question

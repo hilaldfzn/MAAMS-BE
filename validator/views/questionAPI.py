@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from validator.services.question import QuestionService
-from validator.serializers import QuestionRequest, QuestionResponse
+from validator.serializers import QuestionRequest, QuestionResponse, BaseQuestion
 from rest_framework import status
 
 class QuestionAPI(APIView):
@@ -22,4 +22,9 @@ class QuestionAPI(APIView):
         return Response(serializer.data)
     
     def put(self, request, pk):
-        return ""
+        request_serializer = BaseQuestion(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        question = QuestionService.update_mode(pk=pk, **request_serializer.validated_data)
+        response_serializer = QuestionResponse(question)
+        
+        return Response(response_serializer.data)
