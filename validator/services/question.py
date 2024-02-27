@@ -5,12 +5,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from validator.exceptions import NotFoundRequestException
 
 class QuestionService():
-    def create(user_id: uuid, question: str, mode: str):
-        user = CustomUser.objects.get(id=user_id)
+    def create(user: CustomUser, question: str, mode: str):
         question = Question.objects.create(user=user, question=question, mode=mode)
         return question
     
-    def get(pk:uuid):
+    def get(user:CustomUser, pk:uuid):
         try:
             question = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
@@ -22,7 +21,7 @@ class QuestionService():
         # raise ForbiddenRequestException("User not permitted to view this resource")
         return question
 
-    def update_mode(mode:str, pk:uuid):
+    def update_mode(user:CustomUser, mode:str, pk:uuid):
         try:
             question = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
