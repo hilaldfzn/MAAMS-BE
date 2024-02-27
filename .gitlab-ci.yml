@@ -85,6 +85,7 @@ Test:
         path: coverage.xml
   tags:
     - runner-randi
+    - runner-rania
 
 
 Build-Staging:
