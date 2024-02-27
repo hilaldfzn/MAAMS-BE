@@ -15,7 +15,11 @@ class QuestionAPI(APIView):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     
     def get(self, request, pk):
-        return ""
+        # TODO: Integrate with user after implemented (get user from request)
+        question = QuestionService.get_question(pk)
+        serializer = QuestionResponse(question)
+        
+        return Response(serializer.data)
     
     def put(self, request, pk):
         return ""
