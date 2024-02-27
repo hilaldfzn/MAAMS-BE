@@ -92,7 +92,7 @@ class QuestionViewTest(APITestCase):
         question = Question.objects.get(id=self.question_uuid)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.id, question.id)
+        self.assertEqual(response.id, question.id) 
         
     def test_get_non_existing_question(self):
         non_existing_pk = uuid.uuid4()
@@ -114,6 +114,7 @@ class QuestionViewTest(APITestCase):
         response = self.client.post(url, self.valid_data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['username'], 'test-username')
         self.assertEqual(Question.objects.get(id=response.data['id']).question, 'Test question')
     
     def test_post_question_missing_value(self):

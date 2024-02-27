@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from validator.models.question import Question
-from authentication.serializers import CustomUserSerializer
 
 class BaseQuestion(serializers.Serializer):
     MODE_CHOICES = Question.ModeChoices
@@ -22,6 +21,5 @@ class QuestionResponse(BaseQuestion):
     
     id = serializers.UUIDField()
     question = serializers.CharField()
-    created_at = serializers.DateTimeField()
-    
+    created_at = serializers.DateTimeField()    
 

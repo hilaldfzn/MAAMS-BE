@@ -1,0 +1,3 @@
+from pydantic
+
+class CreateQuestionDataClass()

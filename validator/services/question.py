@@ -2,11 +2,12 @@ from validator.models.question import Question
 from authentication.models import CustomUser
 import uuid
 from django.core.exceptions import ObjectDoesNotExist
-from validator.exceptions import NotFoundRequestException
+from validator.exceptions import NotFoundRequestException, ForbiddenRequestException
 
 class QuestionService():
     def create(user: CustomUser, question: str, mode: str):
         question = Question.objects.create(user=user, question=question, mode=mode)
+        
         return question
     
     def get(user:CustomUser, pk:uuid):
@@ -15,6 +16,11 @@ class QuestionService():
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Analisis tidak ditemukan")
         
+        user_id = question.user.uuid
+        
+        if user.uuid != user_id:
+            if user.is_superuser == True and question.mode != Question.ModeChoices.PENGAWASAN:
+                raise ForbiddenRequestException("User not permitted to view this resource")
         # TODO: Check user and mode
         # if user not the same as the creator, check if the user an admin
         # if admin, check if mode == pengawasan
