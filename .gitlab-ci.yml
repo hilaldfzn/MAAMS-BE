@@ -142,6 +142,7 @@ Sonarcloud-Check:
     - sonar-scanner
   tags:
     - runner-randi
+    - runner-rania
 
 
 Deploy-Staging:
