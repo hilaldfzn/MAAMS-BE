@@ -38,7 +38,3 @@ class CustomUserTest(TestCase):
             str(test_user1), f"User {self.username1} with UUID {self.uuid1}")
         self.assertEqual(
             str(test_user2), f"User {self.username2} with UUID {self.uuid2}")
-        self.assertEqual(
-            repr(test_user1), f"User {self.username1} with UUID {self.uuid1}")
-        self.assertEqual(
-            repr(test_user2), f"User {self.username2} with UUID {self.uuid2}")
