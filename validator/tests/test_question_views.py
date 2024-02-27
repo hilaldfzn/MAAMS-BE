@@ -38,17 +38,17 @@ class QuestionViewTest(APITestCase):
         self.user_data2 = CustomUserSerializer(self.user2).data
         
         # valid data
-        self.valid_data = {'user': self.user_data1, 'question': 'Test question', 'mode': Question.ModeChoices.PRIBADI}
-        self.valid_data_put = {'user': self.user_data1, 'id': self.question_uuid, 'mode': Question.ModeChoices.PENGAWASAN}
+        self.valid_data = {'question': 'Test question', 'mode': Question.ModeChoices.PRIBADI}
+        self.valid_data_put = {'id': self.question_uuid, 'mode': Question.ModeChoices.PENGAWASAN}
 
         # invalid data for post
-        self.invalid_data_missing = {'user':self.user_data1, 'question': 'Test question', 'mode': ''}
-        self.invalid_data = {'user':self.user_data1, 'question': 'Test question', 'mode': 'invalid'}
+        self.invalid_data_missing = {'question': 'Test question', 'mode': ''}
+        self.invalid_data = {'question': 'Test question', 'mode': 'invalid'}
         
         # invalid data for put
-        self.invalid_data_put = {'user':self.user_data1, 'id': self.question_uuid, 'mode': 'invalid'}
-        self.invalid_data_put_missing = {'user':self.user_data1, 'id': self.question_uuid, 'mode': ''}
-        self.invalid_data_put_user = {'user':self.user_data2, 'id': self.question_uuid, 'mode': 'invalid'}
+        self.invalid_data_put = {'id': self.question_uuid, 'mode': 'invalid'}
+        self.invalid_data_put_missing = {'id': self.question_uuid, 'mode': ''}
+        self.invalid_data_put_user = {'id': self.question_uuid2, 'mode': Question.ModeChoices.PENGAWASAN}
 
         """
         Question created by user 1
@@ -114,9 +114,7 @@ class QuestionViewTest(APITestCase):
     def test_post_question(self):
         url = reverse('validator:create_question')
         response = self.client.post(url, self.valid_data, format='json')
-        serializer = QuestionRequest(data=response)
 
-        self.assertTrue(serializer.is_valid())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Question.objects.get(id=response.data['id']).question, 'Test question')
     

@@ -85,8 +85,6 @@ Test:
         path: coverage.xml
   tags:
     - runner-randi
-    - runner-rania
-
 
 Build-Staging:
   stage: build
@@ -142,8 +140,6 @@ Sonarcloud-Check:
     - sonar-scanner
   tags:
     - runner-randi
-    - runner-rania
-
 
 Deploy-Staging:
   stage: deploy

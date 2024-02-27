@@ -7,8 +7,7 @@ class BaseQuestion(serializers.Serializer):
 
     class Meta:
         ref_name = 'base question'
-    
-    user = CustomUserSerializer()
+        
     mode = serializers.ChoiceField(choices=MODE_CHOICES)
     
 class QuestionRequest(BaseQuestion):
