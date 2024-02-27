@@ -89,7 +89,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'access_token',
     'authentication',
-    'validator'
+    'validator',
 ]
 
 # Django REST Framework configurations

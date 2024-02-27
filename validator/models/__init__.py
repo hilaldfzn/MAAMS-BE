@@ -1,1 +1,1 @@
-from .question import Question
+from validator.models.question import Question
