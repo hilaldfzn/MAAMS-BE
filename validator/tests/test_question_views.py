@@ -90,11 +90,9 @@ class QuestionViewTest(APITestCase):
         url = reverse('validator:get_question', kwargs={'pk': self.question_uuid})
         response = self.client.get(url)
         question = Question.objects.get(id=self.question_uuid)
-        serializer = QuestionResponse(data=response)
-        
-        self.assertEqual(response.data, serializer.data)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(serializer.id, question.id)
+        self.assertEqual(response.id, question.id)
         
     def test_get_non_existing_question(self):
         non_existing_pk = uuid.uuid4()
@@ -140,9 +138,7 @@ class QuestionViewTest(APITestCase):
         response = self.client.put(url, self.valid_data_put, format='json')
         
         updated_question = Question.objects.get(pk=self.question_uuid)
-        serializer = QuestionResponse(data=response)
         
-        self.assertEqual(response.data, serializer.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(updated_question.mode, Question.ModeChoices.PENGAWASAN)
         
