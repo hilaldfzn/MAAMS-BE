@@ -4,7 +4,6 @@ from rest_framework import status
 from django.urls import reverse
 from validator.models.question import Question
 from authentication.models import CustomUser
-from authentication.serializers import CustomUserSerializer
 from validator.serializers import QuestionRequest, BaseQuestion
 import uuid
 
@@ -17,23 +16,21 @@ class QuestionViewTest(APITestCase):
         self.question_uuid2 = uuid.uuid4()
         
         # users
-        self.user_uuid1 = uuid.uuid4()
         self.user1 = CustomUser(
             username="test-username",
             email="test@email.com"
         )
+        self.user_uuid1 = self.user1.uuid
         self.user1.set_password('test-password')
         self.user1.save()
-        self.user_data1 = CustomUserSerializer(self.user1).data
 
-        self.user_uuid2 = uuid.uuid4()
-        self.user2 = CustomUser.objects.create(
-            uuid=self.user_uuid2,
-            username="test2",
-            password="test-password",
+        self.user2 = CustomUser(
+            username="test-username2",
             email="test2@email.com"
         )
-        self.user_data2 = CustomUserSerializer(self.user2).data
+        self.user_uuid2 = self.user2.uuid
+        self.user2.set_password('test-password')
+        self.user2.save()
         
         # valid data
         self.valid_data = {'question': 'Test question', 'mode': Question.ModeChoices.PRIBADI}
@@ -81,11 +78,13 @@ class QuestionViewTest(APITestCase):
         response_login = self.client.post(
             self.url_login,
             data=json.dumps(self.valid_credentials_login),
-            content_type=self.content_type_login
+            content_type=self.content_type_login,
         )
         
-        self.assertEqual(
-            response_login.status_code, status.HTTP_200_OK)
+        access_token = response_login.data['access_token']  # Extracting access token from login response
+        
+        # Set the token in the header for all subsequent requests
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
         
     def test_get_question(self):
         url = reverse('validator:get_question', kwargs={'pk': self.question_uuid})
@@ -93,7 +92,7 @@ class QuestionViewTest(APITestCase):
         question = Question.objects.get(id=self.question_uuid)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.id, question.id) 
+        self.assertEqual(response.data['id'], str(question.id)) 
         
     def test_get_non_existing_question(self):
         non_existing_pk = uuid.uuid4()
@@ -171,7 +170,7 @@ class QuestionViewTest(APITestCase):
     
     def test_put_forbidden(self):
         url = reverse('validator:put_question', kwargs={'pk': self.question_uuid2})
-        response = self.client.put(url)
+        response = self.client.put(url, self.valid_data_put, format='json')
         
         self.assertEqual(response.data['detail'], "User not permitted to update this resource")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
