@@ -6,53 +6,53 @@ from validator.exceptions import NotFoundRequestException, ForbiddenRequestExcep
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 
 class QuestionService():
-    def create(user: CustomUser, question: str, mode: str):
-        questionObject = Question.objects.create(user=user, question=question, mode=mode)
+    def create(self, user: CustomUser, question: str, mode: str):
+        question_object = Question.objects.create(user=user, question=question, mode=mode)
         
         return CreateQuestionDataClass(
-            username = questionObject.user.username,
-            id = questionObject.id,
-            question = questionObject.question,
-            created_at = questionObject.created_at,
-            mode = questionObject.mode
+            username = question_object.user.username,
+            id = question_object.id,
+            question = question_object.question,
+            created_at = question_object.created_at,
+            mode = question_object.mode
         )
     
-    def get(user:CustomUser, pk:uuid):
+    def get(self, user:CustomUser, pk:uuid):
         try:
-            questionObject = Question.objects.get(pk=pk)
+            question_object = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Analisis tidak ditemukan")
         
-        user_id = questionObject.user.uuid
+        user_id = question_object.user.uuid
         if user.uuid != user_id:
             raise ForbiddenRequestException("User not permitted to view this resource")
                 
         return CreateQuestionDataClass(
-            username = questionObject.user.username,
-            id = questionObject.id,
-            question = questionObject.question,
-            created_at = questionObject.created_at,
-            mode = questionObject.mode
+            username = question_object.user.username,
+            id = question_object.id,
+            question = question_object.question,
+            created_at = question_object.created_at,
+            mode = question_object.mode
         )
 
-    def update_mode(user:CustomUser, mode:str, pk:uuid):
+    def update_mode(self, user:CustomUser, mode:str, pk:uuid):
         try:
-            questionObject = Question.objects.get(pk=pk)
+            question_object = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Analisis tidak ditemukan")
         
-        user_id = questionObject.user.uuid
+        user_id = question_object.user.uuid
 
         if user.uuid != user_id:
             raise ForbiddenRequestException("User not permitted to update this resource")
         
-        questionObject.mode = mode
-        questionObject.save()
+        question_object.mode = mode
+        question_object.save()
         
         return CreateQuestionDataClass(
-            username = questionObject.user.username,
-            id = questionObject.id,
-            question = questionObject.question,
-            created_at = questionObject.created_at,
-            mode = questionObject.mode
+            username = question_object.user.username,
+            id = question_object.id,
+            question = question_object.question,
+            created_at = question_object.created_at,
+            mode = question_object.mode
         )

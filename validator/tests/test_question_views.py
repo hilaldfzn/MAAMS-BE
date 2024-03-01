@@ -37,13 +37,18 @@ class QuestionViewTest(APITestCase):
         self.valid_data_put = {'id': self.question_uuid, 'mode': Question.ModeChoices.PENGAWASAN}
 
         # invalid data for post
-        self.invalid_data_missing = {'question': 'Test question', 'mode': ''}
-        self.invalid_data = {'question': 'Test question', 'mode': 'invalid'}
+        self.invalid_data_missing = {'question': 'Test question missing', 'mode': ''}
+        self.invalid_data = {'question': 'Test question invalid', 'mode': 'invalid'}
         
         # invalid data for put
         self.invalid_data_put = {'id': self.question_uuid, 'mode': 'invalid'}
         self.invalid_data_put_missing = {'id': self.question_uuid, 'mode': ''}
         self.invalid_data_put_user = {'id': self.question_uuid2, 'mode': Question.ModeChoices.PENGAWASAN}
+        
+        # urls
+        self.post_url = 'validator:create_question'
+        self.get_url = 'validator:get_question'
+        self.put_url = 'validator:put_question'
 
         """
         Question created by user 1
@@ -87,7 +92,7 @@ class QuestionViewTest(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
         
     def test_get_question(self):
-        url = reverse('validator:get_question', kwargs={'pk': self.question_uuid})
+        url = reverse(self.get_url, kwargs={'pk': self.question_uuid})
         response = self.client.get(url)
         question = Question.objects.get(id=self.question_uuid)
 
@@ -96,21 +101,21 @@ class QuestionViewTest(APITestCase):
         
     def test_get_non_existing_question(self):
         non_existing_pk = uuid.uuid4()
-        url = reverse('validator:get_question', kwargs={'pk': non_existing_pk})
+        url = reverse(self.get_url, kwargs={'pk': non_existing_pk})
         response = self.client.get(url)
         
         self.assertEqual(response.data['detail'], "Analisis tidak ditemukan")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         
     def test_get_forbidden(self):
-        url = reverse('validator:get_question', kwargs={'pk': self.question_uuid2})
+        url = reverse(self.get_url, kwargs={'pk': self.question_uuid2})
         response = self.client.get(url)
         
         self.assertEqual(response.data['detail'], "User not permitted to view this resource")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
     def test_post_question(self):
-        url = reverse('validator:create_question')
+        url = reverse(self.post_url)
         response = self.client.post(url, self.valid_data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -118,7 +123,7 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(Question.objects.get(id=response.data['id']).question, 'Test question')
     
     def test_post_question_missing_value(self):
-        url = reverse('validator:create_question')
+        url = reverse(self.post_url)
         response = self.client.post(url, self.invalid_data_missing, format='json')
         serializer = QuestionRequest(data=self.invalid_data)
         
@@ -126,7 +131,7 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_post_question_invalid_value(self):
-        url = reverse('validator:create_question')
+        url = reverse(self.post_url)
         response = self.client.post(url, self.invalid_data, format='json')
         
         serializer = QuestionRequest(data=self.invalid_data)
@@ -135,7 +140,7 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_put_question(self):
-        url = reverse('validator:put_question', kwargs={'pk': self.question_uuid})
+        url = reverse(self.put_url, kwargs={'pk': self.question_uuid})
         response = self.client.put(url, self.valid_data_put, format='json')
         
         updated_question = Question.objects.get(pk=self.question_uuid)
@@ -144,7 +149,7 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(updated_question.mode, Question.ModeChoices.PENGAWASAN)
         
     def test_put_question_invalid_value(self):
-        url = reverse('validator:put_question', kwargs={'pk': self.question_uuid})
+        url = reverse(self.put_url, kwargs={'pk': self.question_uuid})
         response = self.client.put(url, self.invalid_data_put, format='json')
         
         serializer = BaseQuestion(data=self.invalid_data_put)
@@ -153,7 +158,7 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_put_question_missing_value(self):
-        url = reverse('validator:put_question', kwargs={'pk': self.question_uuid})
+        url = reverse(self.put_url, kwargs={'pk': self.question_uuid})
         response = self.client.put(url, self.invalid_data_put_missing, format='json')
         
         serializer = BaseQuestion(data=self.invalid_data_put_missing)
@@ -163,13 +168,13 @@ class QuestionViewTest(APITestCase):
         
     def test_put_nonexisting_question(self):
         non_existing_pk = uuid.uuid4()
-        url = reverse('validator:put_question', kwargs={'pk': non_existing_pk})
+        url = reverse(self.put_url, kwargs={'pk': non_existing_pk})
         response = self.client.put(url, self.valid_data_put, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     
     def test_put_forbidden(self):
-        url = reverse('validator:put_question', kwargs={'pk': self.question_uuid2})
+        url = reverse(self.put_url, kwargs={'pk': self.question_uuid2})
         response = self.client.put(url, self.valid_data_put, format='json')
         
         self.assertEqual(response.data['detail'], "User not permitted to update this resource")
