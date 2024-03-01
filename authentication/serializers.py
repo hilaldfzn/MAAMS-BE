@@ -36,11 +36,16 @@ class LoginResponseSerializer(serializers.Serializer):
 
     
 class RegisterSerializer(serializers.ModelSerializer):
-    password2 = serializers.CharField(write_only=True, required=True)
+    username = serializers.CharField(
+        write_only=True, required=True,
+        validators=[UniqueValidator(queryset=CustomUser.objects.all())]
+    )
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=CustomUser.objects.all())]  # Menambahkan UniqueValidator untuk memastikan email adalah unik
     )
+    password = serializers.CharField(write_only=True, required=True)
+    password2 = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = CustomUser
