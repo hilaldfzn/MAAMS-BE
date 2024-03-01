@@ -5,7 +5,6 @@ from validator.serializers import QuestionRequest, QuestionResponse, BaseQuestio
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
-
 class QuestionPost(APIView):
     @extend_schema(
     description='Request and Response data for creating a question',
@@ -22,7 +21,7 @@ class QuestionPost(APIView):
     
 class QuestionGet(APIView):    
     @extend_schema(
-        description='Request data to get a question',
+        description='Request and Response data to get a question',
         responses=QuestionResponse,
     )
     def get(self, request, pk):

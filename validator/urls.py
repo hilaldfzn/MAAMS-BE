@@ -1,5 +1,5 @@
 from django.urls import path
-from validator.views.questionAPI import QuestionGet, QuestionPost, QuestionPut
+from validator.views.question import QuestionGet, QuestionPost, QuestionPut
 
 app_name = 'validator'
 
