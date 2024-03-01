@@ -86,7 +86,6 @@ Test:
   tags:
     - runner-randi
 
-
 Build-Staging:
   stage: build
   image: docker
@@ -141,7 +140,6 @@ Sonarcloud-Check:
     - sonar-scanner
   tags:
     - runner-randi
-
 
 Deploy-Staging:
   stage: deploy
