@@ -22,4 +22,5 @@ django-safedelete==1.3.1
 psycopg2-binary
 drf-spectacular
 djangorestframework-simplejwt
+django-cors-headers
 pydantic==1.10.2
