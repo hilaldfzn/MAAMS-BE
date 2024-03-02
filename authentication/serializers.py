@@ -37,12 +37,11 @@ class LoginResponseSerializer(serializers.Serializer):
     
 class RegisterSerializer(serializers.ModelSerializer):
     username = serializers.CharField(   
-        write_only=True, required=True,
-        validators=[UniqueValidator(queryset=CustomUser.objects.all(), message='Username is already in use')]
+        write_only=True, required=True
     )
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=CustomUser.objects.all())] 
+          validators=[UniqueValidator(queryset=CustomUser.objects.all())] 
     )
     password = serializers.CharField(write_only=True, required=True)
     password2 = serializers.CharField(write_only=True, required=True)
@@ -52,7 +51,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'password', 'password2')
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
+        username = attrs.get('username')
+        password = attrs.get('password')
+        password2 = attrs.get('password2')
+
+        if CustomUser.objects.filter(username=username).exists():
+            raise serializers.ValidationError({"username": "Username is already in use"})
+
+        if password != password2:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
 
         return attrs
@@ -61,5 +67,3 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('password2')
         user = CustomUser.objects.create_user(**validated_data)
         return user
-
-
