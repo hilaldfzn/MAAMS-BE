@@ -3,11 +3,10 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 from rest_framework.exceptions import (
    AuthenticationFailed, ParseError
 )
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -16,7 +15,7 @@ from drf_spectacular.utils import extend_schema
 
 from .models import CustomUser
 from .serializers import (
-    CustomUserSerializer, LoginRequestSerializer, LoginResponseSerializer
+    CustomUserSerializer, LoginRequestSerializer, LoginResponseSerializer, RegisterSerializer
 )
 
 
@@ -63,8 +62,6 @@ def login(request):
         }, 
         status=status.HTTP_200_OK
     )
-    
-
 def generate_tokens(user: CustomUser) -> dict:
     """
     Generates access and refresh tokens for successful logins.
@@ -74,3 +71,19 @@ def generate_tokens(user: CustomUser) -> dict:
         'access': str(refresh.access_token),
         'refresh': str(refresh)
     }
+
+@extend_schema(
+    request=RegisterSerializer,
+)
+@api_view(['POST'])
+def register(request):
+    """
+    Register a new user.
+    """
+    if request.method == 'POST':  
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({"detail": "User registered successfully."}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+    return Response({"detail": "Method not allowed."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)  
