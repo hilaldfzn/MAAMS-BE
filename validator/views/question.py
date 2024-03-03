@@ -3,28 +3,43 @@ from rest_framework.response import Response
 from validator.services.question import QuestionService
 from validator.serializers import QuestionRequest, QuestionResponse, BaseQuestion
 from rest_framework import status
+from drf_spectacular.utils import extend_schema
 
-class QuestionAPI(APIView):
+class QuestionPost(APIView):
+    @extend_schema(
+    description='Request and Response data for creating a question',
+    request=QuestionRequest,
+    responses=QuestionResponse,
+    )
     def post(self, request):
-        # TODO: Integrate with user after implemented (get user from request)
         request_serializer = QuestionRequest(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        question = QuestionService.create_question(**request_serializer.validated_data)
+        question = QuestionService.create(self, user=request.user, **request_serializer.validated_data)
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     
+class QuestionGet(APIView):    
+    @extend_schema(
+        description='Request and Response data to get a question',
+        responses=QuestionResponse,
+    )
     def get(self, request, pk):
-        # TODO: Integrate with user after implemented (get user from request)
-        question = QuestionService.get_question(pk)
+        question = QuestionService.get(self, user=request.user, pk=pk)
         serializer = QuestionResponse(question)
         
         return Response(serializer.data)
     
+class QuestionPut(APIView):
+    @extend_schema(
+        description='Request and Response data for updating a question',
+        request=BaseQuestion,
+        responses=QuestionResponse,
+    )
     def put(self, request, pk):
         request_serializer = BaseQuestion(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        question = QuestionService.update_mode(pk=pk, **request_serializer.validated_data)
+        question = QuestionService.update_mode(self, user=request.user, pk=pk, **request_serializer.validated_data)
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data)

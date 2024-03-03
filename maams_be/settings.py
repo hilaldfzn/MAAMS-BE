@@ -75,6 +75,10 @@ DEBUG = get_env_value("DEBUG")
 
 ALLOWED_HOSTS = get_env_value("ALLOWED_HOSTS").split(",")
 
+CORS_ALLOWED_ORIGINS = [
+    get_env_value("HOST_FE"),  # Add the origin of your frontend application
+]
+
 
 # Application definition
 
@@ -85,10 +89,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'drf_spectacular',
     'access_token',
     'authentication',
+    'validator',
 ]
 
 # Django REST Framework configurations
@@ -117,6 +123,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 # DRF-Spectacular configurations, OpenAPI3 schema generator
