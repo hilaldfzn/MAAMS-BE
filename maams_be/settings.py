@@ -32,7 +32,9 @@ active_env = str(os.environ["ENVIRONMENT"])
 # If a new environment is added,
 # check here to load .env file if file is present.
 if active_env == 'DEVELOPMENT':
-        load_dotenv('./.env.dev')
+    load_dotenv('./.env.dev')
+elif active_env == 'TESTING':
+    load_dotenv('./.env.test')
  
 def get_env_value(env_variable: str) -> str | int | bool | None:
     """
@@ -71,7 +73,11 @@ SECRET_KEY = get_env_value("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = get_env_value("DEBUG")
 
-ALLOWED_HOSTS = ['34.87.36.56', 'localhost']
+ALLOWED_HOSTS = get_env_value("ALLOWED_HOSTS").split(",")
+
+CORS_ALLOWED_ORIGINS = [
+    get_env_value("HOST_FE"),  # Add the origin of your frontend application
+]
 
 
 # Application definition
@@ -83,8 +89,32 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
     'rest_framework',
+    'drf_spectacular',
+    'access_token',
+    'authentication',
+    'validator',
 ]
+
+# Django REST Framework configurations
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# JWT access token properties
+# https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    'USER_ID_FIELD': 'uuid',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -94,7 +124,16 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
+
+# DRF-Spectacular configurations, OpenAPI3 schema generator
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MAAMS-BE',
+    'DESCRIPTION': 'Backend API documentation for MAAMS.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 ROOT_URLCONF = 'maams_be.urls'
 
@@ -121,11 +160,17 @@ WSGI_APPLICATION = 'maams_be.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': get_env_value("DB_NAME"),
+        'USER': get_env_value("DB_USER"),
+        'PASSWORD': get_env_value("DB_PASSWORD"),
+        'HOST': get_env_value("DB_HOST"),
+        'PORT': get_env_value("DB_PORT"),
     }
 }
 
+# Set default auth model to Custom User
+AUTH_USER_MODEL = 'authentication.CustomUser'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
