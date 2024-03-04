@@ -12,6 +12,7 @@ ARG DB_NAME
 ARG DB_PORT
 ARG DB_USER
 ARG DB_PASSWORD
+ARG HOST_FE
 
 # Required environment variables as build arguments here
 ENV ENVIRONMENT ${ENVIRONMENT}
@@ -22,7 +23,7 @@ ENV DB_NAME ${DB_NAME}
 ENV DB_PORT ${DB_PORT}
 ENV DB_USER ${DB_USER}
 ENV DB_PASSWORD ${DB_PASSWORD}
-
+ENV HOST_FE ${HOST_FE}
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
