@@ -1,7 +1,6 @@
 from django.db import models
 import uuid
-from authentication.models import CustomUser
-import question
+from validator.models import question
 
 class Causes(models.Model):
     class Meta:
