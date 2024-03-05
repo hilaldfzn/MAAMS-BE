@@ -4,7 +4,7 @@ from django.conf import settings
 from validator.services.causes import CausesService
 import openai
 
-class TestCausesService(TestCase):
+class CausesServiceTest(TestCase):
     @patch('openai.Completion.create')
     def test_api_call_positive(self, mock_completion_create):
         mock_completion_create.return_value.choices[0].text = "test response"
