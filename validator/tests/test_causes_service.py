@@ -2,6 +2,7 @@ from django.test import TestCase
 from unittest.mock import patch
 from django.conf import settings
 from validator.services.causes import CausesService
+import openai
 
 class TestCausesService(TestCase):
     @patch('openai.Completion.create')
@@ -33,7 +34,7 @@ class TestCausesService(TestCase):
             service.api_call(prompt)
 
     @patch('openai.Completion.create')
-    def test_api_call_edge_case(self, mock_completion_create):
+    def test_api_call_special_chars(self, mock_completion_create):
         mock_completion_create.return_value.choices[0].text = "!@#$%^&*()_+"
 
         service = CausesService()
@@ -41,3 +42,12 @@ class TestCausesService(TestCase):
         response = service.api_call(prompt)
 
         self.assertEqual(response, "!@#$%^&*()_+")
+
+    @patch('openai.Completion.create')
+    def test_api_call_forbidden_access(self, mock_completion_create):
+        mock_completion_create.side_effect = openai.OpenAIError("Unauthorized: Invalid API key")
+
+        service = CausesService()
+        prompt = "Test prompt"
+        with self.assertRaises(openai.OpenAIError):
+            service.api_call(prompt)
