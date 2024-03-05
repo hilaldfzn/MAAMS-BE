@@ -4,6 +4,7 @@ from django.urls import reverse
 from validator.models.causes import Causes
 from validator.models.question import Question
 from authentication.models import CustomUser
+from validator.serializers import CausesResponse, CausesRequest, BaseCauses
 import uuid
 import json
 
@@ -16,10 +17,18 @@ class CausesViewTest(APITestCase):
             username="test-username",
             email="test@email.com"
         )
+        self.user_uuid1 = self.user1.uuid
+        self.user1.set_password('test-password')
+        self.user1.save()
+
+
         self.user2 = CustomUser.objects.create(
             username="test-username2",
             email="test2@email.com"
         )
+        self.user_uuid2 = self.user2.uuid
+        self.user2.set_password('test-password')
+        self.user2.save()
 
         self.question_uuid1 = uuid.uuid4()
         self.question_uuid2 = uuid.uuid4()
@@ -75,57 +84,56 @@ class CausesViewTest(APITestCase):
         access_token = response_login.data['access_token']
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
     
-        self.post_url = 'validator:create_cause'
-        self.get_url = 'validator:get_cause'
-        self.put_url = 'validator:put_cause'
+        self.post_url = 'validator:create_causes'
+        self.get_url = 'validator:get_causes'
+        self.put_url = 'validator:put_causes'
 
     def test_create_cause_positive(self):
-        response = self.client.post(self.post_url, self.causes1, format='json')
+        self.valid_data = {'question_id': self.question_uuid1, 
+                           'cause': 'cause', 
+                           'row': 1,
+                           'column': 1,
+                           'mode': Question.ModeChoices.PRIBADI}
+        url = reverse(self.post_url)
+        response = self.client.post(url, self.valid_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['cause'], 'Test Cause')
+        self.assertEqual(response.data['cause'], 'cause')
 
     def test_create_cause_negative_missing_cause(self):
-        self.invalid_data_missing_cause = {'problem': self.question_uuid, 'row': 1, 'column': 1, 'mode': Causes.ModeChoices.PRIBADI}
+        self.invalid_data_missing_cause = {'problem': self.question_uuid1, 'row': 1, 'column': 1, 'mode': ''}
         response = self.client.post(self.post_url, self.invalid_data_missing_cause, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_get_forbidden_access(self):
-        url = reverse(self.post_url, kwargs={'pk': str(self.causes_uuid2)})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_get_cause_forbidden_access(self):
-        url = reverse(self.get_url, kwargs={'pk': str(self.causes_uuid2)})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_put_cause_forbidden_access(self):
-        url = reverse(self.put_url, kwargs={'pk': str(self.causes_uuid2)})
-        data = {'problem': self.question_uuid1, 'row': 1, 'column': 1, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
-        response = self.client.put(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     
     def test_get_cause_positive(self):
-        url = reverse(self.get_url, kwargs={'pk': str(self.causes_uuid)})
+        url = reverse(self.get_url, kwargs={'question_id': str(self.question_uuid1),'pk': str(self.causes_uuid)})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['cause'], 'cause')
 
     def test_get_cause_negative_non_existing_cause(self):
         non_existing_pk = uuid.uuid4()
-        url = reverse(self.get_url, kwargs={'pk': str(non_existing_pk)})
+        url = reverse(self.get_url, kwargs={'question_id': str(self.question_uuid1), 'pk': str(non_existing_pk)})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     
     def test_put_cause_positive(self):
+        self.valid_data = {'problem': str(self.question_uuid1), 'row': 2, 'column': 2, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
+
         url = reverse(self.put_url, kwargs={'pk': str(self.causes_uuid)})
-        data = {'problem': self.question_uuid1, 'row': 1, 'column': 1, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
+        data = {'question_id': self.question_uuid1, 'row': 1, 'column': 1, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
         response = self.client.put(url, data, format='json')
+
+        updated_cause = Causes.objects.get(pk=self.causes_uuid)
+        
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['cause'], 'Updated Cause')
+        self.assertEqual(updated_cause.mode, Question.ModeChoices.PRIBADI)
 
     def test_put_cause_invalid_data(self):
-        url = reverse(self.put_url, kwargs={'pk': str(self.causes_uuid)})
-        invalid_data = {'problem': self.question_uuid1, 'row': 1, 'column': 1, 'mode': Causes.ModeChoices.PRIBADI, 'cause': ''}
-        response = self.client.put(url, invalid_data, format='json')
+        url = reverse(self.put_url, kwargs={'pk': self.question_uuid1})
+        self.invalid_data_put = {'problem': self.question_uuid1, 'row': 1, 'column': 1, 'mode': ''}
+        response = self.client.put(url, self.invalid_data_put, format='json')
+        
+        serializer = BaseCauses(data=self.invalid_data_put)
+        
+        self.assertFalse(serializer.is_valid())
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

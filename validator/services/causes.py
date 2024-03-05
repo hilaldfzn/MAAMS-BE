@@ -4,8 +4,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from validator.dataclasses.create_cause import CreateCauseDataClass
 from validator.models import question
 from validator.models.causes import Causes
-from validator.exceptions import NotFoundRequestException, ForbiddenRequestException
-
+from validator.services import question
+from authentication.models import CustomUser
+from validator.exceptions import NotFoundRequestException
+import uuid
 class CausesService:
     def api_call(self, prompt: str):
         openai.api_key = settings.OPENAI_API_KEY
@@ -22,16 +24,16 @@ class CausesService:
 
         return answer
 
-    def create(self, question: question, cause_data: CreateCauseDataClass) -> CreateCauseDataClass:
+    def create(user: CustomUser, question_id: uuid, cause: str, row: int, column: int, mode: str) -> CreateCauseDataClass:
         cause = Causes.objects.create(
-            problem=question,
-            row=cause_data.row,
-            column=cause_data.column,
-            mode=cause_data.mode,
-            cause=cause_data.cause
+            problem= question.QuestionService.get(question_id),
+            row=row,
+            column=column,
+            mode=mode,
+            cause=cause
         )
         return CreateCauseDataClass(
-            problem_id=cause.problem_id,
+            problem_id=cause.question.id,
             id=cause.id,
             row=cause.row,
             column=cause.column,
@@ -39,9 +41,10 @@ class CausesService:
             cause=cause.cause
         )
 
-    def get(self, question: question, pk: int) -> CreateCauseDataClass:
+    def get(user: CustomUser, question_id: uuid, pk: int) -> CreateCauseDataClass:
         try:
-            cause = Causes.objects.get(pk=pk, problem=question)
+            problem= question.QuestionService.get(question_id)
+            cause = Causes.objects.get(pk=pk, problem=problem)
             return CreateCauseDataClass(
                 problem_id=cause.problem_id,
                 id=cause.id,
@@ -53,9 +56,10 @@ class CausesService:
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
 
-    def update(self, question: question, cause_data: CreateCauseDataClass, pk: int) -> CreateCauseDataClass:
+    def update(user: CustomUser, question_id: uuid, cause_data: CreateCauseDataClass, pk: int) -> CreateCauseDataClass:
         try:
-            cause = Causes.objects.get(pk=pk, problem=question)
+            problem= question.QuestionService.get(question_id)
+            cause = Causes.objects.get(pk=pk, problem=problem)
             cause.row = cause_data.row
             cause.column = cause_data.column
             cause.mode = cause_data.mode

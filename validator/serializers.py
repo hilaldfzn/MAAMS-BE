@@ -36,7 +36,10 @@ class CausesRequest(BaseCauses):
     class Meta:
         ref_name = 'causes request'
 
+    question_id = serializers.IntegerField()
     cause = serializers.CharField()
+    row = serializers.IntegerField()
+    column = serializers.IntegerField()
     
 class CausesResponse(BaseCauses):
     class Meta:
@@ -44,3 +47,5 @@ class CausesResponse(BaseCauses):
     
     id = serializers.UUIDField()
     cause = serializers.CharField()
+    row = serializers.IntegerField()
+    column = serializers.IntegerField()
