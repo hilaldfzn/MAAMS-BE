@@ -22,7 +22,7 @@ class CausesService:
 
         return answer
 
-    def create(question: question, cause_data: CreateCauseDataClass) -> CreateCauseDataClass:
+    def create(self, question: question, cause_data: CreateCauseDataClass) -> CreateCauseDataClass:
         cause = Causes.objects.create(
             problem=question,
             row=cause_data.row,
@@ -39,7 +39,7 @@ class CausesService:
             cause=cause.cause
         )
 
-    def get(question: question, pk: int) -> CreateCauseDataClass:
+    def get(self, question: question, pk: int) -> CreateCauseDataClass:
         try:
             cause = Causes.objects.get(pk=pk, problem=question)
             return CreateCauseDataClass(
@@ -53,7 +53,7 @@ class CausesService:
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
 
-    def update(question: question, cause_data: CreateCauseDataClass, pk: int) -> CreateCauseDataClass:
+    def update(self, question: question, cause_data: CreateCauseDataClass, pk: int) -> CreateCauseDataClass:
         try:
             cause = Causes.objects.get(pk=pk, problem=question)
             cause.row = cause_data.row

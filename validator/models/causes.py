@@ -1,6 +1,6 @@
 from django.db import models
 import uuid
-from validator.models import question
+from validator.models import Question
 
 class Causes(models.Model):
     class Meta:
@@ -11,7 +11,7 @@ class Causes(models.Model):
         PENGAWASAN = "PENGAWASAN", "pengawasan"
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    problem = models.ForeignKey(question.Question, on_delete=models.SET_NULL, null=True)
+    problem = models.ForeignKey(Question, on_delete=models.SET_NULL, null=True)
     row = models.IntegerField()
     column = models.IntegerField()
     mode = models.CharField(max_length = 20, choices=ModeChoices.choices, default=ModeChoices.PRIBADI)

@@ -1,8 +1,7 @@
 from pydantic import BaseModel
 from uuid import UUID
-from datetime import datetime
 
-class CreateQuestionDataClass(BaseModel):
+class CreateCauseDataClass(BaseModel):
     problem_id: str
     id: UUID
     row: int
