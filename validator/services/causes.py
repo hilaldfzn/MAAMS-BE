@@ -8,23 +8,19 @@ from validator.exceptions import NotFoundRequestException, ForbiddenRequestExcep
 
 class CausesService:
     def api_call(self, prompt: str):
-        # Integrate with ChatGPT
         openai.api_key = settings.OPENAI_API_KEY
         response = openai.Completion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": prompt},
             ],
-            max_tokens=5,  # TODO: determine most optimal param
-            n=5,  # TODO: determine most optimal param
-            temperature=0  # TODO: determine most optimal param
+            max_tokens= 5,  # TODO: determine most optimal param
+            n= 5,  # TODO: determine most optimal param
+            temperature= 0.5  # TODO: determine most optimal param
         )
         answer = response.choices[0].text.strip()
 
         return answer
-
-    def check_root_cause(input_string: str, previous_cause: str) -> bool:
-        pass
 
     def create(question: question, cause_data: CreateCauseDataClass) -> CreateCauseDataClass:
         cause = Causes.objects.create(
