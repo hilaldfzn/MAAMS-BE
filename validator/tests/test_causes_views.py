@@ -5,6 +5,7 @@ from validator.models.causes import Causes
 from validator.models.question import Question
 from authentication.models import CustomUser
 import uuid
+import json
 
 class CausesViewTest(APITestCase):
     def setUp(self):
@@ -67,7 +68,7 @@ class CausesViewTest(APITestCase):
 
         response_login = self.client.post(
             self.url_login,
-            data=self.valid_credentials_login,
+            data=json.dumps(self.valid_credentials_login),
             content_type=self.content_type_login,
         )
 
