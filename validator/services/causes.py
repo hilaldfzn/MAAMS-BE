@@ -1,14 +1,12 @@
-from authentication.models import CustomUser
 import openai
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from authentication.models import CustomUser
 from validator.dataclasses.create_cause import CreateCauseDataClass
+from validator.models import question
 from validator.models.causes import Causes
 from validator.exceptions import NotFoundRequestException, ForbiddenRequestException
 
 class CausesService:
-    @staticmethod
     def api_call(self, prompt: str):
         # Integrate with ChatGPT
         openai.api_key = settings.OPENAI_API_KEY
@@ -26,12 +24,11 @@ class CausesService:
         return answer
 
     def check_root_cause(input_string: str, previous_cause: str) -> bool:
-        # Check root cause logic (as shown in the previous response)
         pass
 
-    def create(user: CustomUser, cause_data: CreateCauseDataClass) -> CreateCauseDataClass:
+    def create(question: question, cause_data: CreateCauseDataClass) -> CreateCauseDataClass:
         cause = Causes.objects.create(
-            problem_id=cause_data.problem_id,
+            problem=question,
             row=cause_data.row,
             column=cause_data.column,
             mode=cause_data.mode,
@@ -46,9 +43,9 @@ class CausesService:
             cause=cause.cause
         )
 
-    def get(user: CustomUser, pk: int) -> CreateCauseDataClass:
+    def get(question: question, pk: int) -> CreateCauseDataClass:
         try:
-            cause = Causes.objects.get(pk=pk, problem__user=user)
+            cause = Causes.objects.get(pk=pk, problem=question)
             return CreateCauseDataClass(
                 problem_id=cause.problem_id,
                 id=cause.id,
@@ -60,10 +57,9 @@ class CausesService:
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
 
-    def update(user: CustomUser, cause_data: CreateCauseDataClass, pk: int) -> CreateCauseDataClass:
+    def update(question: question, cause_data: CreateCauseDataClass, pk: int) -> CreateCauseDataClass:
         try:
-            cause = Causes.objects.get(pk=pk, problem__user=user)
-            cause.problem_id = cause_data.problem_id
+            cause = Causes.objects.get(pk=pk, problem=question)
             cause.row = cause_data.row
             cause.column = cause_data.column
             cause.mode = cause_data.mode
