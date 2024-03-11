@@ -111,7 +111,7 @@ class QuestionViewTest(APITestCase):
         url = reverse(self.get_url, kwargs={'pk': self.question_uuid2})
         response = self.client.get(url)
         
-        self.assertEqual(response.data['detail'], "User not permitted to view this resource")
+        self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
     def test_post_question(self):
@@ -177,5 +177,5 @@ class QuestionViewTest(APITestCase):
         url = reverse(self.put_url, kwargs={'pk': self.question_uuid2})
         response = self.client.put(url, self.valid_data_put, format='json')
         
-        self.assertEqual(response.data['detail'], "User not permitted to update this resource")
+        self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk mengubah analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
