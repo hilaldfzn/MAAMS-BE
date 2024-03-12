@@ -37,8 +37,8 @@ class CausesRequest(BaseCauses):
         ref_name = 'causes request'
 
     MODE_CHOICES = Causes.ModeChoices
-    
-    question_id = serializers.IntegerField()
+
+    question_id = serializers.UUIDField()
     row = serializers.IntegerField()
     column = serializers.IntegerField()
     mode = serializers.ChoiceField(choices=MODE_CHOICES)

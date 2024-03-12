@@ -12,28 +12,26 @@ class CausesService:
     def api_call(self, prompt: str):
         openai.api_key = settings.OPENAI_API_KEY
         response = openai.Completion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": prompt},
-            ],
-            max_tokens= 5,  
-            n= 5,  
-            temperature= 0.5  
-        )
+                model="gpt-3.5-turbo",
+                prompt=prompt,
+                max_tokens=1,  
+                n=3,           
+                temperature=0  
+            )
         answer = response.choices[0].text.strip()
 
         return answer
 
     def create(user: CustomUser, question_id: uuid, cause: str, row: int, column: int, mode: str) -> CreateCauseDataClass:
         cause = Causes.objects.create(
-            problem=question.QuestionService.get(self=question.QuestionService, user=user, pk=question_id),
+            problem=question.Question.objects.get(pk=question_id),
             row=row,
             column=column,
             mode=mode,
             cause=cause
         )
         return CreateCauseDataClass(
-            question_id=cause.question.id,
+            question_id=cause.problem.id,
             id=cause.id,
             row=cause.row,
             column=cause.column,

@@ -99,8 +99,6 @@ class CausesViewTest(APITestCase):
                            }
         url = reverse(self.post_url)
         response = self.client.post(url, self.valid_data, format='json')
-        print(response.content)
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['cause'], 'cause')
 
@@ -127,8 +125,6 @@ class CausesViewTest(APITestCase):
         url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid1), 'pk': str(self.causes_uuid)})
         data = {'question_id': self.question_uuid1, 'id':self.causes_uuid, 'cause': 'Updated Cause'}
         response = self.client.put(url, data, format='json')
-
-        updated_cause = Causes.objects.get(pk=self.causes_uuid)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -141,3 +137,12 @@ class CausesViewTest(APITestCase):
         
         self.assertFalse(serializer.is_valid())
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+    def test_put_cause_missing_data(self):
+        non_existing_pk = uuid.uuid4()
+        url = reverse(self.put_url, kwargs={'question_id': str(non_existing_pk), 'pk': str(non_existing_pk)})
+        self.invalid_data_put = {'cause': 'Updated cause'}
+        response = self.client.put(url, self.invalid_data_put, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
