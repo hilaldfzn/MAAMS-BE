@@ -112,7 +112,7 @@ class CausesViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     
     def test_get_cause_positive(self):
-        url = reverse(self.get_url, kwargs={'question_id': str(self.question_uuid1),'pk': str(self.causes_uuid)})
+        url = reverse(self.get_url, kwargs={'question_id': self.question_uuid1,'pk': self.causes_uuid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], str(self.causes_uuid))
@@ -157,7 +157,7 @@ class CausesViewTest(APITestCase):
     '''
     def test_rca_row_equal_1(self):
         with patch.object(CausesService, 'api_call', return_value=True):
-            url = reverse(self.validate_url, kwargs={'question_id': str(self.question_uuid1)})
+            url = reverse(self.validate_url, kwargs={'question_id': self.question_uuid1})
             response = self.client.post(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -184,7 +184,7 @@ class CausesViewTest(APITestCase):
         Causes.objects.create(problem=Question.objects.get(pk=self.question_uuid1), row=2, column=1, mode='PRIBADI', cause='different cause')
 
         with patch.object(CausesService, 'api_call', return_value=False):
-            url = reverse(self.validate_url, kwargs={'question_id': str(self.question_uuid1)})
+            url = reverse(self.validate_url, kwargs={'question_id': self.question_uuid1})
             response = self.client.post(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -43,7 +43,7 @@ class CausesService:
                         cause.save()
 
 
-    def create(user: CustomUser, question_id: uuid, cause: str, row: int, column: int, mode: str) -> CreateCauseDataClass:
+    def create(self, question_id: uuid, cause: str, row: int, column: int, mode: str) -> CreateCauseDataClass:
         cause = Causes.objects.create(
             problem=question.Question.objects.get(pk=question_id),
             row=row,
@@ -61,7 +61,7 @@ class CausesService:
             status=cause.status
         )
 
-    def get(user: CustomUser, question_id: uuid, pk: uuid) -> CreateCauseDataClass:
+    def get(self, question_id: uuid, pk: uuid) -> CreateCauseDataClass:
         try:
             cause = Causes.objects.get(pk=pk, problem_id = question_id)
             return CreateCauseDataClass(
@@ -76,7 +76,7 @@ class CausesService:
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
 
-    def update(user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
+    def update(self, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
         try:
             causes = Causes.objects.get(problem_id = question_id, pk=pk)
             causes.cause = cause
