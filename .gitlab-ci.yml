@@ -4,6 +4,7 @@ default:
       - $(pwd)/.cache/pip
 
 variables:
+  ALLOWED_HOSTS: $ALLOWED_HOSTS
   PRODUCTION: $PRODUCTION
   STAGING: $STAGING
   SECRET_KEY: $SECRET_KEY
@@ -100,7 +101,7 @@ Build-Staging:
   script:
     - ls -a
     - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
-    - docker build --build-arg ENVIRONMENT=$STAGING --build-arg SECRET_KEY=$SECRET_KEY --build-arg DEBUG=True --build-arg DB_HOST=$DB_HOST_STAGING --build-arg DB_NAME=$DB_NAME_STAGING --build-arg DB_PORT=$DB_PORT_STAGING --build-arg DB_USER=$DB_USER_STAGING --build-arg DB_PASSWORD=$DB_PASSWORD_STAGING --build-arg HOST_FE=$HOST_FE --build-arg OPEN_API_KEY=$OPEN_API_KEY -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
+    - docker build --build-arg ENVIRONMENT=$STAGING --build-arg ALLOWED_HOSTS=$ALLOWED_HOSTS --build-arg SECRET_KEY=$SECRET_KEY --build-arg DEBUG=True --build-arg DB_HOST=$DB_HOST_STAGING --build-arg DB_NAME=$DB_NAME_STAGING --build-arg DB_PORT=$DB_PORT_STAGING --build-arg DB_USER=$DB_USER_STAGING --build-arg DB_PASSWORD=$DB_PASSWORD_STAGING --build-arg HOST_FE=$HOST_FE --build-arg OPEN_API_KEY=$OPEN_API_KEY -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
     - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
   tags:
     - dind
@@ -154,7 +155,7 @@ Deploy-Staging:
     - ssh -v -o StrictHostKeyChecking=no -i "$SSH_KEY_STAGING" $GCP_USERNAME_STAGING@$GCP_STATIC_IP_STAGING "
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
-      docker run --name $CONTAINER_NAME -d -p 80:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
+      docker run --name $CONTAINER_NAME -d $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
   tags:
     - runner-randi
   only:
@@ -172,7 +173,7 @@ Deploy-Production:
     - ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PROD $GCP_USERNAME_PROD@$GCP_STATIC_IP_PROD "
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
-      docker run --name $CONTAINER_NAME -d -p 80:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
+      docker run --name $CONTAINER_NAME -d $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
   tags:
     - runner-randi
   only:
