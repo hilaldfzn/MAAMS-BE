@@ -22,7 +22,25 @@ class CausesService:
 
         return answer
 
-    def rca(self, user: CustomUser, question_id: uuid, row: int):
+    def rca(self, question_id: uuid, row: int):
+        causes = Causes.objects.filter(problem_id=question_id, row=row)
+        problem = question.Question.objects.get(pk=question_id)
+
+        if row == 1:
+            for cause in causes:
+                prompt = f"Is '{cause.cause}' the cause of '{problem.question}'? Answer using True/False"
+                if self.api_call(prompt):
+                    cause.status = True
+                    cause.save()
+        else:
+            for cause in causes:
+                prev_cause = Causes.objects.filter(problem_id=question_id, row=row-1, column=cause.column).first()
+                if prev_cause and prev_cause.cause == cause.cause:
+                    prompt = f"Is '{cause.cause}' the cause of '{prev_cause.cause}'? Answer using True/False"
+                    if self.api_call(prompt):
+                        cause.status = True
+                        cause.save()
+                        
         return
 
 

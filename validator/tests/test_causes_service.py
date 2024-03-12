@@ -62,7 +62,7 @@ class CausesServiceTest(TestCase):
         
         with patch.object(CausesService, 'api_call', return_value=True):
             service = CausesService()
-            service.rca(None, question_id, 1)
+            service.rca(question_id, 1)
         
         cause1.refresh_from_db()
         cause2.refresh_from_db()
@@ -78,7 +78,7 @@ class CausesServiceTest(TestCase):
 
         with patch.object(CausesService, 'api_call', return_value=True):
             service = CausesService()
-            service.rca(None, question_id, 2)
+            service.rca(question_id, 2)
 
         cause2.refresh_from_db()
 
