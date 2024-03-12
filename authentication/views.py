@@ -82,7 +82,8 @@ def register(request):
     """ 
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
-        user = serializer.save()
+        serializer.save()
         return Response({"detail": "User registered successfully."}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+ 
 
