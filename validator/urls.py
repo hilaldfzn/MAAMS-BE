@@ -1,6 +1,6 @@
 from django.urls import path
 from validator.views.question import QuestionGet, QuestionPost, QuestionPut
-from validator.views.causes import CausesGet, CausesPost, CausesPut
+from validator.views.causes import CausesGet, CausesPost, CausesPut, ValidateView
 
 app_name = 'validator'
 
@@ -11,4 +11,5 @@ urlpatterns = [
     path('causes/', CausesPost.as_view(), name="create_causes"),
     path('causes/<uuid:question_id>/<uuid:pk>', CausesGet.as_view(), name="get_causes"),
     path('causes/update/<uuid:question_id>/<uuid:pk>/', CausesPut.as_view(), name="put_causes"),
+    path('causes/validate/<uuid:question_id>/', ValidateView.as_view(), name="validate_causes"),
 ]

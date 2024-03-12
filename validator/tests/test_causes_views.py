@@ -58,7 +58,8 @@ class CausesViewTest(APITestCase):
             row=1,
             column=1,
             mode=Causes.ModeChoices.PRIBADI,
-            cause='cause'
+            cause='cause',
+            status=False
         )
 
         self.causes2 = Causes.objects.create(
@@ -67,7 +68,8 @@ class CausesViewTest(APITestCase):
             row=1,
             column=1,
             mode=Causes.ModeChoices.PRIBADI,
-            cause=''
+            cause='',
+            status=False
         )
 
         self.url_login = reverse('authentication:login')
@@ -155,28 +157,35 @@ class CausesViewTest(APITestCase):
     '''
     def test_rca_row_equal_1(self):
         with patch.object(CausesService, 'api_call', return_value=True):
-            url = reverse(self.validate_url, kwargs={'question_id': str(self.question_uuid1), 'row': 1})
+            url = reverse(self.validate_url, kwargs={'question_id': str(self.question_uuid1)})
             response = self.client.post(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(self.causes1.refresh_from_db().status)
+        self.causes1.refresh_from_db()
+
+        self.assertTrue(self.causes1.status)
 
     def test_rca_row_greater_than_1(self):
-        Causes.objects.create(problem=self.question_uuid1, row=2, column=1, mode='PRIBADI', cause='cause 2')
+        question_id = uuid.uuid4()
+        question = Question.objects.create(pk=question_id, question='Test question')
+
+        Causes.objects.create(problem=question, row=1, column=1, mode='PRIBADI', cause='Cause 1')
+        cause2 = Causes.objects.create(problem=question, row=2, column=1, mode='PRIBADI', cause='Cause 1')
 
         with patch.object(CausesService, 'api_call', return_value=True):
-            url = reverse(self.validate_url, kwargs={'question_id': str(self.question_uuid1), 'row': 2})
+            url = reverse(self.validate_url, kwargs={'question_id': question_id})
             response = self.client.post(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(Causes.objects.get(problem=self.question_uuid1, row=2).status)
+        cause2.refresh_from_db()
+        self.assertTrue(cause2.status)
 
     def test_rca_row_not_updated(self):
-        Causes.objects.create(problem=self.question_uuid1, row=2, column=1, mode='PRIBADI', cause='different cause')
+        Causes.objects.create(problem=Question.objects.get(pk=self.question_uuid1), row=2, column=1, mode='PRIBADI', cause='different cause')
 
         with patch.object(CausesService, 'api_call', return_value=False):
-            url = reverse(self.validate_url, kwargs={'question_id': str(self.question_uuid1), 'row': 2})
+            url = reverse(self.validate_url, kwargs={'question_id': str(self.question_uuid1)})
             response = self.client.post(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(Causes.objects.get(problem=self.question_uuid1, row=2).status)
+        self.assertFalse(Causes.objects.get(problem=Question.objects.get(pk=self.question_uuid1), row=2).status)
