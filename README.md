@@ -71,6 +71,8 @@
     DB_USER=<your local DB username>
     DB_PASSWORD=<your local DB password>
     DB_NAME=<your local DB name>
+
+    OPENAI_API_KEY=<your openAI API token>
     ```
 
 5. Initialize database tables
