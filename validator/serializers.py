@@ -30,22 +30,23 @@ class BaseCauses(serializers.Serializer):
     class Meta:
         ref_name = 'base causes'
         
-    mode = serializers.ChoiceField(choices=MODE_CHOICES)
+    cause = serializers.CharField()
     
 class CausesRequest(BaseCauses):
     class Meta:
         ref_name = 'causes request'
 
+    MODE_CHOICES = Causes.ModeChoices
+    
     question_id = serializers.IntegerField()
-    cause = serializers.CharField()
     row = serializers.IntegerField()
     column = serializers.IntegerField()
-    
+    mode = serializers.ChoiceField(choices=MODE_CHOICES)
 class CausesResponse(BaseCauses):
     class Meta:
         ref_name = 'causes response'
     
     id = serializers.UUIDField()
-    cause = serializers.CharField()
+    question_id = serializers.UUIDField()
     row = serializers.IntegerField()
     column = serializers.IntegerField()

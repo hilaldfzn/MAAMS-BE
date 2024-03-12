@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from validator.services.causes import CausesService
 from validator.services.question import QuestionService
-from validator.serializers import CausesRequest, CausesResponse
+from validator.serializers import CausesRequest, CausesResponse, BaseCauses
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
@@ -25,9 +25,8 @@ class CausesGet(APIView):
         description='Request and Response data to get a cause',
         responses=CausesResponse,
     )
-    def get(self, request, pk):
-        question = QuestionService.get(self, user=request.user, pk=pk)
-        cause = CausesService.get(question, pk=pk)
+    def get(self, request, question_id, pk):
+        cause = CausesService.get(user = request.user, question_id=question_id, pk=pk)
         serializer = CausesResponse(cause)
 
         return Response(serializer.data)
@@ -35,14 +34,13 @@ class CausesGet(APIView):
 class CausesPut(APIView):
     @extend_schema(
         description='Request and Response data for updating a cause',
-        request=CausesRequest,
+        request=BaseCauses,
         responses=CausesResponse,
     )
-    def put(self, request, pk):
-        question = QuestionService.get(self, user=request.user, pk=pk)
-        request_serializer = CausesRequest(data=request.data)
+    def put(self, request, question_id, pk):
+        request_serializer = BaseCauses(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        cause = CausesService.update(question, pk=pk, **request_serializer.validated_data)
+        cause = CausesService.update(user = request.user, question_id=question_id, pk=pk, **request_serializer.validated_data)
         response_serializer = CausesResponse(cause)
 
         return Response(response_serializer.data)

@@ -16,9 +16,9 @@ class CausesService:
             messages=[
                 {"role": "system", "content": prompt},
             ],
-            max_tokens= 5,  # TODO: determine most optimal param
-            n= 5,  # TODO: determine most optimal param
-            temperature= 0.5  # TODO: determine most optimal param
+            max_tokens= 5,  
+            n= 5,  
+            temperature= 0.5  
         )
         answer = response.choices[0].text.strip()
 
@@ -26,14 +26,14 @@ class CausesService:
 
     def create(user: CustomUser, question_id: uuid, cause: str, row: int, column: int, mode: str) -> CreateCauseDataClass:
         cause = Causes.objects.create(
-            problem= question.QuestionService.get(question_id),
+            problem=question.QuestionService.get(self=question.QuestionService, user=user, pk=question_id),
             row=row,
             column=column,
             mode=mode,
             cause=cause
         )
         return CreateCauseDataClass(
-            problem_id=cause.question.id,
+            question_id=cause.question.id,
             id=cause.id,
             row=cause.row,
             column=cause.column,
@@ -41,12 +41,11 @@ class CausesService:
             cause=cause.cause
         )
 
-    def get(user: CustomUser, question_id: uuid, pk: int) -> CreateCauseDataClass:
+    def get(user: CustomUser, question_id: uuid, pk: uuid) -> CreateCauseDataClass:
         try:
-            problem= question.QuestionService.get(question_id)
-            cause = Causes.objects.get(pk=pk, problem=problem)
+            cause = Causes.objects.get(pk=pk, problem_id = question_id)
             return CreateCauseDataClass(
-                problem_id=cause.problem_id,
+                question_id=question_id,
                 id=cause.id,
                 row=cause.row,
                 column=cause.column,
@@ -56,22 +55,19 @@ class CausesService:
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
 
-    def update(user: CustomUser, question_id: uuid, cause_data: CreateCauseDataClass, pk: int) -> CreateCauseDataClass:
+    def update(user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
         try:
-            problem= question.QuestionService.get(question_id)
-            cause = Causes.objects.get(pk=pk, problem=problem)
-            cause.row = cause_data.row
-            cause.column = cause_data.column
-            cause.mode = cause_data.mode
-            cause.cause = cause_data.cause
-            cause.save()
+            causes = Causes.objects.get(problem_id = question_id, pk=pk)
+            causes.cause = cause
+            causes.save()
+
             return CreateCauseDataClass(
-                problem_id=cause.problem_id,
-                id=cause.id,
-                row=cause.row,
-                column=cause.column,
-                mode=cause.mode,
-                cause=cause.cause
+                question_id=question_id,
+                id=causes.id,
+                row=causes.row,
+                column=causes.column,
+                mode=causes.mode,
+                cause=causes.cause
             )
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")

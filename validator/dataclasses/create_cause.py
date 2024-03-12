@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from uuid import UUID
 
 class CreateCauseDataClass(BaseModel):
-    problem_id: str
+    question_id: UUID
     id: UUID
     row: int
     column: int

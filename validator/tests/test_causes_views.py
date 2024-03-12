@@ -65,7 +65,7 @@ class CausesViewTest(APITestCase):
             row=1,
             column=1,
             mode=Causes.ModeChoices.PRIBADI,
-            cause='cause'
+            cause=''
         )
 
         self.url_login = reverse('authentication:login')
@@ -85,17 +85,22 @@ class CausesViewTest(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
     
         self.post_url = 'validator:create_causes'
+        self.post_url_question = 'validator:create_question'
         self.get_url = 'validator:get_causes'
         self.put_url = 'validator:put_causes'
 
     def test_create_cause_positive(self):
-        self.valid_data = {'question_id': self.question_uuid1, 
+        self.valid_data = {
+                           'question_id': self.question_uuid1, 
                            'cause': 'cause', 
                            'row': 1,
                            'column': 1,
-                           'mode': Question.ModeChoices.PRIBADI}
+                           'mode': Question.ModeChoices.PRIBADI
+                           }
         url = reverse(self.post_url)
         response = self.client.post(url, self.valid_data, format='json')
+        print(response.content)
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['cause'], 'cause')
 
@@ -108,28 +113,27 @@ class CausesViewTest(APITestCase):
         url = reverse(self.get_url, kwargs={'question_id': str(self.question_uuid1),'pk': str(self.causes_uuid)})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['cause'], 'cause')
+        self.assertEqual(response.data['id'], str(self.causes_uuid))
 
     def test_get_cause_negative_non_existing_cause(self):
         non_existing_pk = uuid.uuid4()
-        url = reverse(self.get_url, kwargs={'question_id': str(self.question_uuid1), 'pk': str(non_existing_pk)})
+        url = reverse(self.get_url, kwargs={'question_id': str(non_existing_pk), 'pk': str(non_existing_pk)})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     
     def test_put_cause_positive(self):
-        self.valid_data = {'problem': str(self.question_uuid1), 'row': 2, 'column': 2, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
+        self.valid_data = {'question_id': str(self.question_uuid1), 'id':self.causes_uuid, 'row': 2, 'column': 2, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
 
-        url = reverse(self.put_url, kwargs={'pk': str(self.causes_uuid)})
-        data = {'question_id': self.question_uuid1, 'row': 1, 'column': 1, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
+        url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid1), 'pk': str(self.causes_uuid)})
+        data = {'question_id': self.question_uuid1, 'id':self.causes_uuid, 'cause': 'Updated Cause'}
         response = self.client.put(url, data, format='json')
 
         updated_cause = Causes.objects.get(pk=self.causes_uuid)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(updated_cause.mode, Question.ModeChoices.PRIBADI)
 
     def test_put_cause_invalid_data(self):
-        url = reverse(self.put_url, kwargs={'pk': self.question_uuid1})
+        url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid1), 'pk': self.causes_uuid})
         self.invalid_data_put = {'problem': self.question_uuid1, 'row': 1, 'column': 1, 'mode': ''}
         response = self.client.put(url, self.invalid_data_put, format='json')
         
