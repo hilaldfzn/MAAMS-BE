@@ -24,3 +24,4 @@ drf-spectacular
 djangorestframework-simplejwt
 django-cors-headers
 pydantic==1.10.2
+openai

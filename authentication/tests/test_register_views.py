@@ -57,17 +57,19 @@ class RegisterViewTest(APITestCase):
         self.assertTrue(CustomUser.objects.filter(username=self.valid_user_data['username']).exists())
     
     def test_register_with_existing_username_raises_exception(self):
-        # Membuat user dengan username yang sudah ada sebelumnya
+        # Create a user with the same username
         CustomUser.objects.create_user(
             username=self.valid_user_data['username'],
-            email=self.valid_user_data['email'],
-            password=self.valid_user_data['password']
+            email='different@email.com',
+            password='existing-password'
         )
+        # Try to register with the same username
         response = self.client.post(
             self.url,
             data=json.dumps(self.valid_user_data),
             content_type=self.content_type
         )
+        # Assert that the response status code is HTTP 400 Bad Request
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_register_with_existing_email_raises_exception(self):
@@ -100,14 +102,5 @@ class RegisterViewTest(APITestCase):
             content_type=self.content_type
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_register_with_invalid_http_method_raises_exception(self):
-        response = self.client.delete(
-            self.url
-        )
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-
 
 

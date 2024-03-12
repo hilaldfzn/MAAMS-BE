@@ -28,7 +28,7 @@
 
 ## Links
 
-- [API Staging](http://34.87.36.56/)
+- [API Staging](https://staging.maams-be-staging.com/)
 - [API Prod](http://34.143.155.67/)
 
 ## Environment Setup
@@ -63,6 +63,7 @@
     ALLOWED_HOSTS="localhost,127.0.0.1"
     SECRET_KEY=
     DEBUG=True
+    HOST_FE="http://localhost:3000"
 
     # Database credentials
     DB_HOST=<your local DB Host>
@@ -70,6 +71,8 @@
     DB_USER=<your local DB username>
     DB_PASSWORD=<your local DB password>
     DB_NAME=<your local DB name>
+
+    OPENAI_API_KEY=<your openAI API token>
     ```
 
 5. Initialize database tables

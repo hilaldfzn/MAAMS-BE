@@ -25,7 +25,7 @@ class QuestionService():
         
         user_id = question_object.user.uuid
         if user.uuid != user_id:
-            raise ForbiddenRequestException("User not permitted to view this resource")
+            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
                 
         return CreateQuestionDataClass(
             username = question_object.user.username,
@@ -44,7 +44,7 @@ class QuestionService():
         user_id = question_object.user.uuid
 
         if user.uuid != user_id:
-            raise ForbiddenRequestException("User not permitted to update this resource")
+            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk mengubah analisis ini.")
         
         question_object.mode = mode
         question_object.save()
