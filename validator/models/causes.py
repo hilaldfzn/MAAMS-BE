@@ -16,3 +16,4 @@ class Causes(models.Model):
     column = models.IntegerField()
     mode = models.CharField(max_length = 20, choices=ModeChoices.choices, default=ModeChoices.PRIBADI)
     cause = models.CharField(max_length = 120)
+    status = models.BooleanField(default=False)

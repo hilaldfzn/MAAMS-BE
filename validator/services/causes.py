@@ -22,6 +22,10 @@ class CausesService:
 
         return answer
 
+    def rca(self, user: CustomUser, question_id: uuid, row: int):
+        return
+
+
     def create(user: CustomUser, question_id: uuid, cause: str, row: int, column: int, mode: str) -> CreateCauseDataClass:
         cause = Causes.objects.create(
             problem=question.Question.objects.get(pk=question_id),
