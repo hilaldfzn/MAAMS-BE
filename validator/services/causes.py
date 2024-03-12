@@ -8,6 +8,7 @@ from validator.services import question
 from authentication.models import CustomUser
 from validator.exceptions import NotFoundRequestException
 import uuid
+import math
 class CausesService:
     def api_call(self, prompt: str):
         openai.api_key = settings.OPENAI_API_KEY
@@ -22,26 +23,24 @@ class CausesService:
 
         return answer
 
-    def rca(self, question_id: uuid, row: int):
-        causes = Causes.objects.filter(problem_id=question_id, row=row)
+    def validate(self, question_id: uuid):
+        max_row = Causes.objects.filter(problem_id=question_id).order_by('-row').values_list('row', flat=True).first()
+        causes = Causes.objects.filter(problem_id=question_id, row=max_row)
         problem = question.Question.objects.get(pk=question_id)
 
-        if row == 1:
-            for cause in causes:
+        for cause in causes:
+            if max_row == 1:
                 prompt = f"Is '{cause.cause}' the cause of '{problem.question}'? Answer using True/False"
                 if self.api_call(prompt):
                     cause.status = True
                     cause.save()
-        else:
-            for cause in causes:
-                prev_cause = Causes.objects.filter(problem_id=question_id, row=row-1, column=cause.column).first()
+            else:
+                prev_cause = Causes.objects.filter(problem_id=question_id, row=max_row-1, column=cause.column).first()
                 if prev_cause and prev_cause.cause == cause.cause:
                     prompt = f"Is '{cause.cause}' the cause of '{prev_cause.cause}'? Answer using True/False"
                     if self.api_call(prompt):
                         cause.status = True
                         cause.save()
-                        
-        return
 
 
     def create(user: CustomUser, question_id: uuid, cause: str, row: int, column: int, mode: str) -> CreateCauseDataClass:
@@ -58,7 +57,8 @@ class CausesService:
             row=cause.row,
             column=cause.column,
             mode=cause.mode,
-            cause=cause.cause
+            cause=cause.cause,
+            status=cause.status
         )
 
     def get(user: CustomUser, question_id: uuid, pk: uuid) -> CreateCauseDataClass:
@@ -70,7 +70,8 @@ class CausesService:
                 row=cause.row,
                 column=cause.column,
                 mode=cause.mode,
-                cause=cause.cause
+                cause=cause.cause,
+                status=cause.status
             )
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
@@ -87,7 +88,8 @@ class CausesService:
                 row=causes.row,
                 column=causes.column,
                 mode=causes.mode,
-                cause=causes.cause
+                cause=causes.cause,
+                status=causes.status
             )
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")

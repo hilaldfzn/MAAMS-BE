@@ -8,3 +8,4 @@ class CreateCauseDataClass(BaseModel):
     column: int
     mode: str
     cause: str
+    status: bool

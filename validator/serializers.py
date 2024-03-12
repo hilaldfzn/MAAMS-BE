@@ -50,3 +50,4 @@ class CausesResponse(BaseCauses):
     question_id = serializers.UUIDField()
     row = serializers.IntegerField()
     column = serializers.IntegerField()
+    status = serializers.BooleanField()
