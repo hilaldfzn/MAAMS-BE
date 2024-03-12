@@ -155,7 +155,7 @@ Deploy-Staging:
     - ssh -v -o StrictHostKeyChecking=no -i "$SSH_KEY_STAGING" $GCP_USERNAME_STAGING@$GCP_STATIC_IP_STAGING "
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
-      docker run --name $CONTAINER_NAME -d $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
+      docker run --name $CONTAINER_NAME -d -p 8000:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
   tags:
     - runner-randi
   only:
@@ -173,7 +173,7 @@ Deploy-Production:
     - ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PROD $GCP_USERNAME_PROD@$GCP_STATIC_IP_PROD "
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
-      docker run --name $CONTAINER_NAME -d $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
+      docker run --name $CONTAINER_NAME -d -p 8000:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
   tags:
     - runner-randi
   only:
