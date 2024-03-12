@@ -79,11 +79,10 @@ def generate_tokens(user: CustomUser) -> dict:
 def register(request):
     """
     Register a new user.
-    """
-    if request.method == 'POST':  
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response({"detail": "User registered successfully."}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
-    return Response({"detail": "Method not allowed."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)  
+    """ 
+    serializer = RegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        return Response({"detail": "User registered successfully."}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+
