@@ -17,7 +17,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 class LoginRequestSerializer(serializers.Serializer):
     class Meta:
-        ref_name = 'login_request'
+        ref_name = 'LoginRequest'
         fields = ('username', 'password')
     
     username = serializers.CharField()
@@ -26,7 +26,7 @@ class LoginRequestSerializer(serializers.Serializer):
 
 class LoginResponseSerializer(serializers.Serializer):
     class Meta:
-        ref_name = 'login_response'
+        ref_name = 'LoginResponse'
         fields = ('access_token', 'refresh_token', 'data', 'detail')
     
     access_token = serializers.CharField()
