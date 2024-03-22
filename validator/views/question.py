@@ -55,5 +55,13 @@ class QuestionDelete(APIView):
         description='Request and Response data for deleting a question',
     )
     def delete(self, request, pk):
-        return ""
+        question = QuestionService.delete(self, user=request.user, pk=pk)
+        response_serializer = QuestionResponse(question)
+        
+        response_data = {
+            'message': 'Analisis berhasil dihapus',
+            'deleted_question': response_serializer.data
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
     

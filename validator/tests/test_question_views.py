@@ -16,11 +16,14 @@ class QuestionViewTest(APITestCase):
         """
         self.question_uuid = uuid.uuid4()
         self.question_uuid2 = uuid.uuid4()
+        self.question_uuid_super = uuid.uuid4()
+        self.question_uuid_super2 = uuid.uuid4()
         
-        # users
         self.user1 = CustomUser(
             username="test-username",
-            email="test@email.com"
+            email="test@email.com",
+            is_superuser=True,
+            is_staff=True 
         )
         self.user_uuid1 = self.user1.uuid
         self.user1.set_password('test-password')
@@ -84,6 +87,24 @@ class QuestionViewTest(APITestCase):
             mode=Question.ModeChoices.PRIBADI
         )
         
+                
+        """
+        Supervised Questions
+        """
+        self.question_super = Question.objects.create(
+            user=self.user1,
+            id=self.question_uuid_super, 
+            question='pertanyaan supervised',
+            mode=Question.ModeChoices.PENGAWASAN
+        )
+        
+        self.question_super = Question.objects.create(
+            user=self.user2,
+            id=self.question_uuid_super2, 
+            question='pertanyaan supervised',
+            mode=Question.ModeChoices.PENGAWASAN
+        )
+        
         """
         User login
         """
@@ -129,6 +150,14 @@ class QuestionViewTest(APITestCase):
         
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+    def test_get_supervised_question(self):
+        url = reverse(self.get_url, kwargs={'pk': self.question_uuid_super2})
+        response = self.client.get(url)
+        question = Question.objects.get(id=self.question_uuid_super2)
+                
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], str(question.id)) 
         
     def test_post_question(self):
         url = reverse(self.post_url)
@@ -225,4 +254,24 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk menghapus analisis ini.")
 
+    def test_get_supervised_question_fail(self):
+        valid_credentials_login2 = {
+            'username': 'test-username2',
+            'password': 'test-password'
+        }
         
+        response_login = self.client.post(
+            self.url_login,
+            data=json.dumps(valid_credentials_login2),
+            content_type=self.content_type_login,
+        )
+        
+        access_token = response_login.data['access_token']
+        
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        
+        url = reverse(self.get_url, kwargs={'pk': self.question_uuid_super})
+        response = self.client.get(url)
+                
+        self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
