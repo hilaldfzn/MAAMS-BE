@@ -1,11 +1,17 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from validator.services.question import QuestionService
-from validator.serializers import QuestionRequest, QuestionResponse, BaseQuestion
 from rest_framework import status
-from drf_spectacular.utils import extend_schema
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
+from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
+
+from drf_spectacular.utils import extend_schema
+
+from validator.services.question import QuestionService
+from validator.serializers import (
+    QuestionRequest, QuestionResponse, BaseQuestion
+)
+
 
 @permission_classes([IsAuthenticated])
 class QuestionPost(APIView):
@@ -22,8 +28,12 @@ class QuestionPost(APIView):
         
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     
+
 @permission_classes([IsAuthenticated])
-class QuestionGet(APIView):    
+class QuestionGet(ViewSet):    
+    """
+    ViewSet to return all or specific questions.
+    """
     @extend_schema(
         description='Request and Response data to get a question',
         responses=QuestionResponse,
@@ -34,6 +44,18 @@ class QuestionGet(APIView):
         
         return Response(serializer.data)
     
+    @extend_schema(
+        description='Returns all questions corresponding to a specified user.',
+        responses=QuestionResponse(many=True)
+    )
+    def get_all(self, request):
+        # TODO: core implementation
+        return Response(
+            data={ "payload": "OK" },
+            status=status.HTTP_200_OK
+        )
+    
+
 @permission_classes([IsAuthenticated])
 class QuestionPut(APIView):
     @extend_schema(

@@ -1,9 +1,15 @@
-from validator.models.question import Question
-from authentication.models import CustomUser
 import uuid
+
 from django.core.exceptions import ObjectDoesNotExist
-from validator.exceptions import NotFoundRequestException, ForbiddenRequestException
+
+from authentication.models import CustomUser
 from validator.dataclasses.create_question import CreateQuestionDataClass 
+from validator.exceptions import (
+    NotFoundRequestException, ForbiddenRequestException
+)
+from validator.models.question import Question
+from validator.serializers import Question
+
 
 class QuestionService():
     def create(self, user: CustomUser, question: str, mode: str):
@@ -34,6 +40,14 @@ class QuestionService():
             created_at = question_object.created_at,
             mode = question_object.mode
         )
+    
+    def get_all(self, user: CustomUser) -> list[CreateQuestionDataClass]:
+        """
+        Returns a list of  all questions corresponding to a specified user.
+        # TODO: core implementation
+        # TODO: handle pagination
+        """
+        return []
 
     def update_mode(self, user:CustomUser, mode:str, pk:uuid):
         try:
@@ -56,3 +70,4 @@ class QuestionService():
             created_at = question_object.created_at,
             mode = question_object.mode
         )
+    
