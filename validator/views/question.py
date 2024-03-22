@@ -48,3 +48,12 @@ class QuestionPut(APIView):
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data)
+    
+@permission_classes([IsAuthenticated])
+class QuestionDelete(APIView):
+    @extend_schema(
+        description='Request and Response data for deleting a question',
+    )
+    def delete(self, request, pk):
+        return ""
+    
