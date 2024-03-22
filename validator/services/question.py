@@ -44,10 +44,26 @@ class QuestionService():
     def get_all(self, user: CustomUser) -> list[CreateQuestionDataClass]:
         """
         Returns a list of  all questions corresponding to a specified user.
-        # TODO: core implementation
         # TODO: handle pagination
         """
-        return []
+        # allow only superuser/staff (admins) to access resource
+        if not user.is_superuser or not user.is_staff:
+            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
+        # get all publicly available questions of mode "PENGAWASAN" 
+        questions = Question.objects.filter(mode="PENGAWASAN")
+        
+        response = []
+        for question in questions:
+            item =  CreateQuestionDataClass(
+                username = question.user.username,
+                id = question.id,
+                question = question.question,
+                created_at = question.created_at,
+                mode = question.mode
+            )
+            response.append(item)
+
+        return response
 
     def update_mode(self, user:CustomUser, mode:str, pk:uuid):
         try:

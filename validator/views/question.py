@@ -28,12 +28,13 @@ class QuestionPost(APIView):
         
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     
-
+    
 @permission_classes([IsAuthenticated])
 class QuestionGet(ViewSet):    
     """
     ViewSet to return all or specific questions.
     """
+    
     @extend_schema(
         description='Request and Response data to get a question',
         responses=QuestionResponse,
@@ -49,9 +50,11 @@ class QuestionGet(ViewSet):
         responses=QuestionResponse(many=True)
     )
     def get_all(self, request):
-        # TODO: core implementation
+        questions = QuestionService.get_all(self, user=request.user)
+        serializer = QuestionResponse(questions, many=True)
+
         return Response(
-            data={ "payload": "OK" },
+            data={ "payload": serializer.data },
             status=status.HTTP_200_OK
         )
     
