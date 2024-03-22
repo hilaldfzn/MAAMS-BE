@@ -7,6 +7,8 @@ from validator.exceptions import NotFoundRequestException, ForbiddenRequestExcep
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 
 class QuestionService():
+    not_found_message = "Analisis tidak ditemukan"
+    
     def create(self, user: CustomUser, question: str, mode: str):
         question_object = Question.objects.create(user=user, question=question, mode=mode)
         
@@ -22,7 +24,7 @@ class QuestionService():
         try:
             question_object = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
-            raise NotFoundRequestException("Analisis tidak ditemukan")
+            raise NotFoundRequestException(QuestionService.not_found_message)
         
         user_id = question_object.user.uuid
         
@@ -44,7 +46,7 @@ class QuestionService():
         try:
             question_object = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
-            raise NotFoundRequestException("Analisis tidak ditemukan")
+            raise NotFoundRequestException(QuestionService.not_found_message)
         
         user_id = question_object.user.uuid
 
@@ -66,7 +68,7 @@ class QuestionService():
         try:
             question_object = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
-            raise NotFoundRequestException("Analisis tidak ditemukan")
+            raise NotFoundRequestException(QuestionService.not_found_message)
         
         user_id = question_object.user.uuid
 
