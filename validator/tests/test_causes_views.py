@@ -87,6 +87,8 @@ class CausesViewTest(APITestCase):
 
         access_token = response_login.data['access_token']
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
+        self.superuser = CustomUser.objects.create_superuser('admin', 'admin@example.com', 'adminpassword')
     
         self.post_url = 'validator:create_causes'
         self.get_url = 'validator:get_causes'
@@ -110,6 +112,21 @@ class CausesViewTest(APITestCase):
         self.invalid_data_missing_cause = {'problem': self.question_uuid1, 'row': 1, 'column': 1, 'mode': ''}
         response = self.client.post(self.post_url, self.invalid_data_missing_cause, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_create_cause_superuser(self):
+        self.client.force_login(self.superuser)
+
+        url = reverse(self.post_url)
+        data = {
+            'question_id': self.question_uuid1, 
+            'cause': 'cause', 
+            'row': 1,
+            'column': 1,
+            'mode': Question.ModeChoices.PRIBADI
+        }
+        response = self.client.post(url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
     def test_get_cause_positive(self):
         url = reverse(self.get_url, kwargs={'question_id': self.question_uuid1,'pk': self.causes_uuid})
@@ -150,6 +167,15 @@ class CausesViewTest(APITestCase):
         response = self.client.put(url, self.invalid_data_put, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_put_cause_superuser(self):
+        self.client.force_login(self.superuser)
+
+        url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid1), 'pk': str(self.causes_uuid)})
+        data = {'question_id': self.question_uuid1, 'id':self.causes_uuid, 'cause': 'Updated Cause'}
+        response = self.client.put(url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
     '''
