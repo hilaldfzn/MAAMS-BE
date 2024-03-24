@@ -86,7 +86,7 @@ class CausesService:
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
 
-        if user.is_superuser:
+        if user.is_superuser and user.uuid != question.Question.objects.get(pk=question_id).user.uuid:
             raise ForbiddenRequestException("Pengguna tidak diizinkan untuk mengedit analisis ini.")
 
         return CreateCauseDataClass(
