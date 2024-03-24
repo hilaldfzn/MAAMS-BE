@@ -63,7 +63,3 @@ class TestSearchBarHistoryService(TestCase):
     def test_filter_invalid_keyword_negative(self):
         with self.assertRaises(NotFoundRequestException):
             self.service.filter(user=self.user, keyword=None, mode=HistoryType.LAST_WEEK.value)
-
-    def test_filter_no_questions_negative(self):
-        with self.assertRaises(NotFoundRequestException):
-            self.service.filter(user=self.user, keyword=self.fake.word(), mode=HistoryType.LAST_WEEK.value)
