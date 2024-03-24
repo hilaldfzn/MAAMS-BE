@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from rest_framework.views import APIView
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 
 from drf_spectacular.utils import extend_schema
@@ -55,6 +55,17 @@ class QuestionGet(ViewSet):
 
         return Response(
             data={ "payload": serializer.data },
+            status=status.HTTP_200_OK
+        )
+    @extend_schema(
+        description='Search for questions containing a specific string.',
+        responses=QuestionResponse(many=True),
+    )
+    @action(detail=False, methods=['get'], url_path='search')
+    def search(self, request):
+        # TODO : Implement core search functionality
+        return Response(
+            data={"payload": "OK"},
             status=status.HTTP_200_OK
         )
     

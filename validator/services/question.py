@@ -72,6 +72,10 @@ class QuestionService():
 
         return response
 
+    def search(self, user: CustomUser, search_query: str) -> list[CreateQuestionDataClass]:
+        # TODO : Implement search functionality
+        return []
+    
     def update_mode(self, user:CustomUser, mode:str, pk:uuid):
         try:
             question_object = Question.objects.get(pk=pk)

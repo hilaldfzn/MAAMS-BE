@@ -313,3 +313,44 @@ class QuestionViewTest(APITestCase):
                 
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    
+    def test_search_questions(self):
+        search_url = reverse('validator:search_questions')
+
+        search_query = 'pertanyaan'
+
+        # Make a GET request to the search endpoint with the query parameter
+        response = self.client.get(f'{search_url}?query={search_query}')
+
+        # Verify that the response status code is HTTP 200 OK
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        search_results = response.data['payload'] 
+        self.assertTrue(len(search_results) > 0)
+
+        for question in search_results:
+            self.assertIn(search_query.lower(), question['question'].lower())
+
+    def test_search_questions_no_results(self):
+        """
+        Test searching for questions with a query that matches no questions.
+        """
+        search_url = reverse('validator:search_questions')  
+        search_query = "nonexistent query"
+        
+        response = self.client.get(f"{search_url}?query={search_query}")
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['payload']), 0, "Expected no questions to match the search query")
+
+    def test_search_questions_forbidden(self):
+        """
+        Test searching for questions without proper permissions, if applicable.
+        """
+        self.client.logout()  
+        
+        search_url = reverse('validator:search_questions')  
+        search_query = "example query"
+        
+        response = self.client.get(f"{search_url}?query={search_query}")
+        self.assertNotEqual(response.status_code, status.HTTP_200_OK, "Expected search to be forbidden without proper permissions")
