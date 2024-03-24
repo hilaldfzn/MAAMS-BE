@@ -1,14 +1,16 @@
 import openai
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from authentication.models import CustomUser
 from validator.dataclasses.create_cause import CreateCauseDataClass
 from validator.models import question
 from validator.models.causes import Causes
+from validator.models.question import Question
 from validator.services import question
-from authentication.models import CustomUser
-from validator.exceptions import NotFoundRequestException
+from validator.exceptions import NotFoundRequestException, ForbiddenRequestException
 import uuid
-import math
+
+
 class CausesService:
     def api_call(self, prompt: str):
         openai.api_key = settings.OPENAI_API_KEY
@@ -76,20 +78,24 @@ class CausesService:
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
 
-    def update(self, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
+    def update(self, user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
         try:
             causes = Causes.objects.get(problem_id = question_id, pk=pk)
             causes.cause = cause
             causes.save()
-
-            return CreateCauseDataClass(
-                question_id=question_id,
-                id=causes.id,
-                row=causes.row,
-                column=causes.column,
-                mode=causes.mode,
-                cause=causes.cause,
-                status=causes.status
-            )
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
+
+        if user.is_superuser:
+            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk mengedit analisis ini.")
+
+        return CreateCauseDataClass(
+            question_id=question_id,
+            id=causes.id,
+            row=causes.row,
+            column=causes.column,
+            mode=causes.mode,
+            cause=causes.cause,
+            status=causes.status
+        )
+        
