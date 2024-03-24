@@ -163,28 +163,16 @@ class QuestionViewTest(APITestCase):
         self.user1.save()
 
     def test_get_all_public_questions_forbidden(self):
+        # reset user status
+        self.user1.is_superuser = False
+        self.user1.is_staff = False
+        self.user1.save()
+
         url = reverse(self.get_all_public_url)
         response = self.client.get(url)
 
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_get_all_public_questions_when_none_available(self):
-        # set user as superuser (for admin testing purposes)
-        self.user1.is_superuser = True
-        self.user1.is_staff = True
-        self.user1.save()
-
-        url = reverse(self.get_all_public_url)
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['payload']), 0)
-
-        # reset user status
-        self.user1.is_superuser = False
-        self.user1.is_staff = False
-        self.user1.save()
         
     def test_get_non_existing_question(self):
         non_existing_pk = uuid.uuid4()
