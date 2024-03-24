@@ -20,7 +20,7 @@ class TestSearchBarHistoryService(TestCase):
             mixer.blend('validator.Question', 
                         user=self.user, 
                         question=self.fake.sentence(), 
-                        created_at=self.fake.date_time_between(start_date='-7d', end_date='now'))  # Generate dates within the last week
+                        created_at=self.fake.date_time_between(start_date='-7d', end_date='now'))
             for _ in range(5)
         ]
 
@@ -31,14 +31,19 @@ class TestSearchBarHistoryService(TestCase):
 
     def test_filter_older_positive(self):
         older_questions = [
-            mixer.blend('validator.Question', user=self.user, question=self.fake.sentence(), created_at=datetime.now() - timedelta(days=8))
+            mixer.blend('validator.Question', user=self.user, question='Older question', created_at=datetime.now() - timedelta(days=9))
             for _ in range(5)
         ]
         
-        with patch.object(SearchBarHistoryService, 'filter') as mock_filter:
-            mock_filter.return_value = older_questions
-            result = self.service.filter(user=self.user, keyword=self.fake.word(), mode=HistoryType.OLDER.value)
+        with patch.object(SearchBarHistoryService, 'get_older') as mock_get_older:
+            mock_get_older.return_value = older_questions
+            result = self.service.filter(user=self.user, keyword='test', mode=HistoryType.OLDER.value)
+            mock_get_older.assert_called_once_with(self.user, 'test', datetime.now() - timedelta(days=7))
             self.assertEqual(len(result), len(older_questions))
+
+    def test_get_older_no_questions(self):
+        result = self.service.get_older(self.user, 'test', datetime.now() - timedelta(days=7))
+        self.assertQuerysetEqual(result, [])
 
     def test_filter_invalid_mode_negative(self):
         with self.assertRaises(InvalidModeRequestException):
