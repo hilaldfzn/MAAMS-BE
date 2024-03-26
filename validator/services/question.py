@@ -1,10 +1,11 @@
 from validator.models.causes import Causes
-import uuid
+import uuid, json
 
 from django.core.exceptions import ObjectDoesNotExist
 
 from authentication.models import CustomUser
 from validator.dataclasses.create_question import CreateQuestionDataClass 
+from validator.enums import QuestionType
 from validator.exceptions import (
     NotFoundRequestException, ForbiddenRequestException
 )
@@ -48,27 +49,16 @@ class QuestionService():
             mode = question_object.mode
         )
     
-    def get_all(self, user: CustomUser) -> list[CreateQuestionDataClass]:
+    def get_all_privileged(self, user: CustomUser):
         """
         Returns a list of  all questions corresponding to a specified user.
-        # TODO: handle pagination
         """
         # allow only superuser/staff (admins) to access resource
         if not user.is_superuser or not user.is_staff:
             raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
         # get all publicly available questions of mode "PENGAWASAN" 
-        questions = Question.objects.filter(mode="PENGAWASAN")
-        
-        response = []
-        for question in questions:
-            item =  CreateQuestionDataClass(
-                username = question.user.username,
-                id = question.id,
-                question = question.question,
-                created_at = question.created_at,
-                mode = question.mode
-            )
-            response.append(item)
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+        response = self.make_question_response(questions)
 
         return response
 
@@ -117,3 +107,19 @@ class QuestionService():
         question_object.delete()
         
         return question_data 
+    
+    """
+    Utility functions.
+    """
+    def make_question_response(self, questions) -> list:
+        response = []
+        for question in questions:
+            item = CreateQuestionDataClass(
+                username = question.user.username,
+                id = question.id,
+                question = question.question,
+                created_at = question.created_at,
+                mode = question.mode
+            )
+            response.append(item)
+        return response
