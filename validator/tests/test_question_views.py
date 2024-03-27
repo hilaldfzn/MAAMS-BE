@@ -284,6 +284,14 @@ class QuestionViewTest(APITestCase):
                 
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+    def test_get_all_questions(self):
+        url = reverse(self.get_all)
+        response = self.client.get(url)
+        questions = Question.objects.filter(user=self.user1)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
 
     def test_get_all_pengawasan_questions(self):
         # set user as superuser (for admin testing purposes)

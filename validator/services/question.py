@@ -49,6 +49,10 @@ class QuestionService():
             mode = question_object.mode
         )
     
+    def get_all(self, user: CustomUser):
+        #TODO : imlp return a list of all question for specific user
+        pass
+    
     def get_all_privileged(self, user: CustomUser):
         """
         Returns a list of  all questions corresponding to a specified user.

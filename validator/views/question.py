@@ -51,6 +51,11 @@ class QuestionGet(ViewSet):
         
         return Response(serializer.data)
     
+    def get_all(self, request):
+        #TDD implementation
+        #TODO: implement pagination, and get all users 
+        pass
+    
     @extend_schema(
         description='Returns all questions with mode PENGAWASAN for privileged users.',
         responses=PaginatedQuestionResponse,
