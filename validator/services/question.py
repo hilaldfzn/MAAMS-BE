@@ -1,13 +1,20 @@
 from validator.models.causes import Causes
-from validator.models.question import Question
-from authentication.models import CustomUser
 import uuid
+
 from django.core.exceptions import ObjectDoesNotExist
-from validator.exceptions import NotFoundRequestException, ForbiddenRequestException
+
+from authentication.models import CustomUser
+from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
+from validator.enums import QuestionType
+from validator.exceptions import (
+    NotFoundRequestException, ForbiddenRequestException
+)
+from validator.models.question import Question
+from validator.serializers import Question
+
 
 class QuestionService():
-    not_found_message = "Analisis tidak ditemukan"
     
     def create(self, user: CustomUser, question: str, mode: str):
         question_object = Question.objects.create(user=user, question=question, mode=mode)
@@ -24,15 +31,15 @@ class QuestionService():
         try:
             question_object = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
-            raise NotFoundRequestException(QuestionService.not_found_message)
+            raise NotFoundRequestException(ErrorMsg.NOT_FOUND)
         
         user_id = question_object.user.uuid
         
         if question_object.mode == Question.ModeChoices.PRIBADI and user.uuid != user_id:
-            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
 
         if question_object.mode == Question.ModeChoices.PENGAWASAN and not (user.is_superuser or user.uuid == user_id):
-            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
 
         return CreateQuestionDataClass(
             username = question_object.user.username,
@@ -41,17 +48,30 @@ class QuestionService():
             created_at = question_object.created_at,
             mode = question_object.mode
         )
+    
+    def get_all_privileged(self, user: CustomUser):
+        """
+        Returns a list of  all questions corresponding to a specified user.
+        """
+        # allow only superuser/staff (admins) to access resource
+        if not user.is_superuser or not user.is_staff:
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
+        # get all publicly available questions of mode "PENGAWASAN" 
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+        response = self.make_question_response(questions)
+
+        return response
 
     def update_mode(self, user:CustomUser, mode:str, pk:uuid):
         try:
             question_object = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
-            raise NotFoundRequestException(QuestionService.not_found_message)
+            raise NotFoundRequestException(ErrorMsg.NOT_FOUND)
         
         user_id = question_object.user.uuid
 
         if user.uuid != user_id:
-            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk mengubah analisis ini.")
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_UPDATE)
         
         question_object.mode = mode
         question_object.save()
@@ -68,12 +88,12 @@ class QuestionService():
         try:
             question_object = Question.objects.get(pk=pk)
         except ObjectDoesNotExist:
-            raise NotFoundRequestException(QuestionService.not_found_message)
+            raise NotFoundRequestException(ErrorMsg.NOT_FOUND)
         
         user_id = question_object.user.uuid
 
         if user.uuid != user_id:
-            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk menghapus analisis ini.")
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_DELETE)
         
         question_data = CreateQuestionDataClass(
             username = question_object.user.username,
@@ -87,3 +107,19 @@ class QuestionService():
         question_object.delete()
         
         return question_data 
+    
+    """
+    Utility functions.
+    """
+    def make_question_response(self, questions) -> list:
+        response = []
+        for question in questions:
+            item = CreateQuestionDataClass(
+                username = question.user.username,
+                id = question.id,
+                question = question.question,
+                created_at = question.created_at,
+                mode = question.mode
+            )
+            response.append(item)
+        return response
