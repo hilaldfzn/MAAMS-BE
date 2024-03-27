@@ -1,15 +1,18 @@
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework import serializers
 from rest_framework.viewsets import ViewSet
 from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, inline_serializer
+
+from utils.pagination import CustomPageNumberPagination
 
 from validator.services.question import QuestionService
 from validator.serializers import (
-    QuestionRequest, QuestionResponse, BaseQuestion
+    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse
 )
 
 
@@ -34,41 +37,32 @@ class QuestionGet(ViewSet):
     """
     ViewSet to return all or specific questions.
     """
+
+    pagination_class = CustomPageNumberPagination()
+    service_class = QuestionService()
     
     @extend_schema(
         description='Request and Response data to get a question',
         responses=QuestionResponse,
     )
     def get(self, request, pk):
-        question = QuestionService.get(self, user=request.user, pk=pk)
+        question = self.service_class.get(user=request.user, pk=pk)
         serializer = QuestionResponse(question)
         
         return Response(serializer.data)
     
     @extend_schema(
-        description='Returns all questions corresponding to a specified user.',
-        responses=QuestionResponse(many=True)
+        description='Returns all questions with mode PENGAWASAN for privileged users.',
+        responses=PaginatedQuestionResponse,
     )
-    def get_all(self, request):
-        questions = QuestionService.get_all(self, user=request.user)
+    def get_all_privileged(self, request):
+        questions = self.service_class.get_all_privileged(user=request.user)
         serializer = QuestionResponse(questions, many=True)
 
-        return Response(
-            data={ "payload": serializer.data },
-            status=status.HTTP_200_OK
-        )
-    @extend_schema(
-        description='Search for questions containing a specific string.',
-        responses=QuestionResponse(many=True),
-    )
-    @action(detail=False, methods=['get'], url_path='search')
-    def search(self, request):
-        # TODO : Implement core search functionality
-        return Response(
-            data={"payload": "OK"},
-            status=status.HTTP_200_OK
-        )
-    
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(serializer.data, request)
+
+        return paginator.get_paginated_response(page)
 
 @permission_classes([IsAuthenticated])
 class QuestionPut(APIView):

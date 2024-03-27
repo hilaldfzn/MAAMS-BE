@@ -20,7 +20,6 @@ class QuestionRequest(BaseQuestion):
     question = serializers.CharField()
     
 
-
 class QuestionResponse(BaseQuestion):
     class Meta:
         ref_name = 'QuestionResponse'
@@ -29,6 +28,16 @@ class QuestionResponse(BaseQuestion):
     question = serializers.CharField()
     created_at = serializers.DateTimeField()
     username = serializers.CharField()
+
+
+class PaginatedQuestionResponse(serializers.Serializer):
+    class Meta:
+        ref_name = 'QuestionResponsePaginated'
+
+    count = serializers.IntegerField(default=5)
+    next = serializers.URLField(default="http://localhost:8000/api/v1/validator/?p=2")
+    previous = serializers.URLField(default="http://localhost:8000/api/v1/validator/?p=1")
+    results = QuestionResponse(many=True)
 
 
 class BaseCauses(serializers.Serializer):
