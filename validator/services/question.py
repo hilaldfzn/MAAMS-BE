@@ -50,8 +50,14 @@ class QuestionService():
         )
     
     def get_all(self, user: CustomUser):
-        #TODO : imlp return a list of all question for specific user
-        pass
+        """
+        Returns a list of  all questions corresponding to a specified user.
+        """
+        # get all questions filtered by user
+        questions = Question.objects.filter(user=user)
+        response = self.make_question_response(questions)
+
+        return response
     
     def get_all_privileged(self, user: CustomUser):
         """
