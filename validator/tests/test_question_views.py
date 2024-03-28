@@ -295,7 +295,7 @@ class QuestionViewTest(APITestCase):
         Question.objects.all().delete()
 
         url = reverse(self.get_all_pengawasan)
-        response = self.client.get(url)
+        response = self.client.get(url + '?time_range=last_week')
         questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
