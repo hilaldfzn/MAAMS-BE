@@ -1,6 +1,5 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework import serializers
 from rest_framework.viewsets import ViewSet
 from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
@@ -52,11 +51,29 @@ class QuestionGet(ViewSet):
         return Response(serializer.data)
     
     @extend_schema(
+        description='Returns all questions corresponding to a specified user.',
+        responses=PaginatedQuestionResponse,
+    )
+    def get_all(self, request):
+        # query param to determine time range or response
+        time_range = request.query_params.get('time_range') 
+        questions = self.service_class.get_all(user=request.user, time_range=time_range)
+        serializer = QuestionResponse(questions, many=True)
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(serializer.data, request)
+
+        return paginator.get_paginated_response(page)
+    
+    @extend_schema(
         description='Returns all questions with mode PENGAWASAN for privileged users.',
         responses=PaginatedQuestionResponse,
     )
     def get_all_privileged(self, request):
-        questions = self.service_class.get_all_privileged(user=request.user)
+        # query param to determine time range or response
+        time_range = request.query_params.get('time_range') 
+
+        questions = self.service_class.get_all_privileged(user=request.user, time_range=time_range)
         serializer = QuestionResponse(questions, many=True)
 
         paginator = self.pagination_class

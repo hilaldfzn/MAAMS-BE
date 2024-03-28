@@ -295,7 +295,7 @@ class QuestionViewTest(APITestCase):
         Question.objects.all().delete()
 
         url = reverse(self.get_all_pengawasan)
-        response = self.client.get(url)
+        response = self.client.get(url + '?time_range=last_week')
         questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -305,6 +305,16 @@ class QuestionViewTest(APITestCase):
         self.user1.is_superuser = False
         self.user1.is_staff = False
         self.user1.save()
+    
+    
+    def test_get_all_questions(self):
+        Question.objects.all().delete()
+        url = reverse(self.get_all)
+        response = self.client.get(url + '?time_range=last_week')
+        questions = Question.objects.filter(user=self.user1)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
 
     def test_get_all_pengawasan_questions_forbidden(self):
         # reset user status
