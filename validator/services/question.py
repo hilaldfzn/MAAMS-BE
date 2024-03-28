@@ -55,6 +55,28 @@ class QuestionService():
             mode = question_object.mode
         )
     
+    def get_all(self, user: CustomUser,time_range: str):
+        """
+        Returns a list of  all questions corresponding to a specified user.
+        """
+
+        today_datetime = datetime.now()
+        last_week_datetime = today_datetime - timedelta(days=7)
+        
+        # get all publicly available questions of mode "PENGAWASAN", depending on time range
+        match time_range:
+            case HistoryType.LAST_WEEK.value:
+                questions = Question.objects.filter(user=user, created_at__range=[last_week_datetime, today_datetime]
+                                                    ).order_by('-created_at')
+            case HistoryType.OLDER.value:
+                questions = Question.objects.filter(user=user, created_at__lt=last_week_datetime
+                                                    ).order_by('-created_at')
+                
+        # get all questions filtered by user
+        response = self.make_question_response(questions)
+
+        return response
+    
     def get_all_privileged(self, user: CustomUser, time_range: str):
         """
         Returns a list of  all questions corresponding to a specified user.
