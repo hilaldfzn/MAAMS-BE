@@ -1,6 +1,5 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework import serializers
 from rest_framework.viewsets import ViewSet
 from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
@@ -56,7 +55,9 @@ class QuestionGet(ViewSet):
         responses=PaginatedQuestionResponse,
     )
     def get_all(self, request):
-        questions = self.service_class.get_all(user=request.user)
+        # query param to determine time range or response
+        time_range = request.query_params.get('time_range') 
+        questions = self.service_class.get_all(user=request.user, time_range=time_range)
         serializer = QuestionResponse(questions, many=True)
 
         paginator = self.pagination_class
@@ -69,7 +70,10 @@ class QuestionGet(ViewSet):
         responses=PaginatedQuestionResponse,
     )
     def get_all_privileged(self, request):
-        questions = self.service_class.get_all_privileged(user=request.user)
+        # query param to determine time range or response
+        time_range = request.query_params.get('time_range') 
+
+        questions = self.service_class.get_all_privileged(user=request.user, time_range=time_range)
         serializer = QuestionResponse(questions, many=True)
 
         paginator = self.pagination_class
