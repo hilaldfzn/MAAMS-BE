@@ -67,3 +67,18 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('password2')
         user = CustomUser.objects.create_user(**validated_data)
         return user
+
+class EditUserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
+    password = serializers.CharField(required=False)
+
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'password']
+
+    def update(self, instance, validated_data):
+        if 'password' in validated_data:
+            instance.set_password(validated_data['password'])
+            validated_data.pop('password')
+        return super().update(instance, validated_data)

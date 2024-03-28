@@ -5,7 +5,8 @@ from rest_framework_simplejwt.views import (
 
 from .views import (
     login, 
-    register
+    register,
+    edit_user
 )
 
 app_name = 'authentication'
@@ -13,5 +14,6 @@ app_name = 'authentication'
 urlpatterns = [
     path('login/', login, name='login'),    
     path('register/', register, name='register'),
-    path('logout/', TokenBlacklistView.as_view(), name='logout')      
+    path('logout/', TokenBlacklistView.as_view(), name='logout'),
+    path('update/', edit_user, name='update')
 ]
