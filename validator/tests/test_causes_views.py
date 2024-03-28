@@ -189,8 +189,8 @@ class CausesViewTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(Causes.objects.get(problem=Question.objects.get(pk=self.question_uuid1), row=2).status)
-
-    def test_put_cause_superuser(self):
+    
+    def test_get_cause_superuser(self):
         self.superuser = CustomUser.objects.create_superuser('admin', 'admin@example.com', 'adminpassword')
         
         response_login = self.client.post(

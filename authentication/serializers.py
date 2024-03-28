@@ -11,7 +11,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = [
             'uuid', 'username', 'email', 
             'first_name', 'last_name', 'date_joined',
-            'is_active', 'is_superuser'
+            'is_active', 'is_staff'
         ]
 
 
