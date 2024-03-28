@@ -1,15 +1,21 @@
-from validator.models.causes import Causes
 import uuid
+from datetime import (
+    datetime, timedelta
+)
 
 from django.core.exceptions import ObjectDoesNotExist
 
 from authentication.models import CustomUser
+
+from history.enums import HistoryType
+
 from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 from validator.enums import QuestionType
 from validator.exceptions import (
     NotFoundRequestException, ForbiddenRequestException
 )
+from validator.models.causes import Causes
 from validator.models.question import Question
 from validator.serializers import Question
 
@@ -49,15 +55,50 @@ class QuestionService():
             mode = question_object.mode
         )
     
-    def get_all_privileged(self, user: CustomUser):
+    def get_all(self, user: CustomUser,time_range: str):
+        """
+        Returns a list of  all questions corresponding to a specified user.
+        """
+
+        today_datetime = datetime.now()
+        last_week_datetime = today_datetime - timedelta(days=7)
+        
+        # get all publicly available questions of mode "PENGAWASAN", depending on time range
+        match time_range:
+            case HistoryType.LAST_WEEK.value:
+                questions = Question.objects.filter(user=user, created_at__range=[last_week_datetime, today_datetime]
+                                                    ).order_by('-created_at')
+            case HistoryType.OLDER.value:
+                questions = Question.objects.filter(user=user, created_at__lt=last_week_datetime
+                                                    ).order_by('-created_at')
+                
+        # get all questions filtered by user
+        response = self.make_question_response(questions)
+
+        return response
+    
+    def get_all_privileged(self, user: CustomUser, time_range: str):
         """
         Returns a list of  all questions corresponding to a specified user.
         """
         # allow only superuser/staff (admins) to access resource
         if not user.is_superuser or not user.is_staff:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
-        # get all publicly available questions of mode "PENGAWASAN" 
-        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+        
+        today_datetime = datetime.now()
+        last_week_datetime = today_datetime - timedelta(days=7)
+        
+        # get all publicly available questions of mode "PENGAWASAN", depending on time range
+        match time_range:
+            case HistoryType.LAST_WEEK.value:
+                questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value,
+                                                    created_at__range=[last_week_datetime, today_datetime]
+                                                    ).order_by('-created_at')
+            case HistoryType.OLDER.value:
+                questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value,
+                                                    created_at__lt=last_week_datetime
+                                                    ).order_by('-created_at')
+        
         response = self.make_question_response(questions)
 
         return response
