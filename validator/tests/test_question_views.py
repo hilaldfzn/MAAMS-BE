@@ -60,8 +60,8 @@ class QuestionViewTest(APITestCase):
         # urls
         self.post_url = 'validator:create_question'
         self.get_url = 'validator:get_question'
-        self.get_all = 'validator:get_question_list'
-        self.get_all_pengawasan = 'validator:get_question_list_pengawasan'
+        self.get_all_url = 'validator:get_question_list'
+        self.get_all_pengawasan_url = 'validator:get_question_list_pengawasan'
         self.put_url = 'validator:put_question'
         self.delete_url = 'validator:delete_question'
 
@@ -285,45 +285,86 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_get_all_pengawasan_questions(self):
+
+    def test_get_all_pengawasan_questions_last_week(self):
+        """init"""
         # set user as superuser (for admin testing purposes)
         self.user1.is_superuser = True
         self.user1.is_staff = True
         self.user1.save()
 
-        # reset questions
-        Question.objects.all().delete()
-
-        url = reverse(self.get_all_pengawasan)
+        """act"""
+        url = reverse(self.get_all_pengawasan_url)
         response = self.client.get(url + '?time_range=last_week')
         questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
+        """assert"""
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], len(questions))
 
+        """cleanup"""
         # reset user status
         self.user1.is_superuser = False
         self.user1.is_staff = False
         self.user1.save()
     
-    
-    def test_get_all_questions(self):
+
+    def test_get_all_questions_last_week(self):
         Question.objects.all().delete()
-        url = reverse(self.get_all)
+        url = reverse(self.get_all_url)
         response = self.client.get(url + '?time_range=last_week')
         questions = Question.objects.filter(user=self.user1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], len(questions))
 
-    def test_get_all_pengawasan_questions_forbidden(self):
+    
+    def test_get_all_questions_older(self):
+        Question.objects.all().delete()
+        url = reverse(self.get_all_url)
+        response = self.client.get(url + '?time_range=older')
+        questions = Question.objects.filter(user=self.user1)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+
+
+    def test_get_all_pengawasan_questions_older(self):
+        """init"""
+        # set user as superuser (for admin testing purposes)
+        self.user1.is_superuser = True
+        self.user1.is_staff = True
+        self.user1.save()
+        # reset questions
+        Question.objects.all().delete()
+
+        """act"""
+        url = reverse(self.get_all_pengawasan_url)
+        response = self.client.get(url + '?time_range=older')
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+
+        """assert"""
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+
+        """cleanup"""
         # reset user status
         self.user1.is_superuser = False
         self.user1.is_staff = False
         self.user1.save()
 
-        url = reverse(self.get_all_pengawasan)
+
+    def test_get_all_pengawasan_questions_forbidden(self):
+        """init"""
+        # reset user status
+        self.user1.is_superuser = False
+        self.user1.is_staff = False
+        self.user1.save()
+
+        """act"""
+        url = reverse(self.get_all_pengawasan_url)
         response = self.client.get(url)
 
+        """assert"""
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
