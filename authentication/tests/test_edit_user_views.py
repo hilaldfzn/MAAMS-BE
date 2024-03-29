@@ -72,3 +72,87 @@ class EditUserTestCase(TestCase):
         response = self.client.patch('/api/v1/auth/update/', data=invalid_data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_edit_user_non_unique_username(self):
+        CustomUser.objects.create_user(
+            username='newusername',
+            email='another@example.com',
+            password='anotherpassword'
+        )
+
+        invalid_data = {
+            'username': 'newusername',
+            'email': 'newemail@example.com',
+            'password': 'newpassword'
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch('/api/v1/auth/update/', data=invalid_data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['case_error'], 'This username is already in use.')
+
+    def test_edit_user_non_unique_email(self):
+        CustomUser.objects.create_user(
+            username='anotheruser',
+            email='newemail@example.com',
+            password='anotherpassword'
+        )
+
+        invalid_data = {
+            'username': 'newusername',
+            'email': 'newemail@example.com',
+            'password': 'newpassword'
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch('/api/v1/auth/update/', data=invalid_data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['case_error'], 'This email is already in use.')
+        
+    def test_edit_user_same_password(self):
+        same_password_data = {
+            'username': 'newusername',
+            'email': 'newemail@example.com',
+            'password': 'testpassword'
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch('/api/v1/auth/update/', data=same_password_data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['case_error'], 'New password cannot be the same as the current one.')
+        
+    def test_edit_user_same_username(self):
+        same_username_data = {
+            'username': self.user.username, 
+            'email': 'newemail@example.com',
+            'password': 'newpassword'
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch('/api/v1/auth/update/', data=same_username_data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['case_error'], 'New username cannot be the same as the current one.')
+
+    def test_edit_user_same_email(self):
+        same_email_data = {
+            'username': 'newusername',
+            'email': self.user.email,
+            'password': 'newpassword'
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch('/api/v1/auth/update/', data=same_email_data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['case_error'], 'New email cannot be the same as the current one.')
+
+
