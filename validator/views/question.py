@@ -74,7 +74,7 @@ class QuestionGet(ViewSet):
         time_range = request.query_params.get('time_range') 
         keyword =  request.query_params.get('keyword', '')
 
-        questions = self.service_class.search_privileged(user=request.user, time_range=time_range, keyword=keyword)
+        questions = self.service_class.get_all_privileged(user=request.user, time_range=time_range, keyword=keyword)
         serializer = QuestionResponse(questions, many=True)
 
         paginator = self.pagination_class
