@@ -6,7 +6,6 @@ from rest_framework import generics
 from history.serializers import HistoryResponse
 from utils.pagination import CustomPageNumberPagination
 from history.services.search_bar import SearchBarHistoryService
-from history.enums import HistoryType
 
 class SearchHistory(generics.ListAPIView):
     serializer_class = HistoryResponse
@@ -14,10 +13,10 @@ class SearchHistory(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        mode = request.query_params.get('mode')
+        time_range = request.query_params.get('time_range')
         keyword = request.query_params.get('keyword', '')
         
-        result = SearchBarHistoryService().filter(user=request.user, keyword=keyword, mode=mode)
+        result = SearchBarHistoryService().filter(user=request.user, keyword=keyword, time_range=time_range)
         serializer = HistoryResponse(result, many=True)
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(serializer.data, request)
