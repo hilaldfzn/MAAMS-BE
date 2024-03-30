@@ -77,7 +77,7 @@ class QuestionService():
 
         return response
     
-    def get_all_privileged(self, user: CustomUser, time_range: str, keyword: str):
+    def get_privileged(self, user: CustomUser, time_range: str, keyword: str):
         """
         Return a list for pengawasan questions by keyword and time range for privileged users.
         """

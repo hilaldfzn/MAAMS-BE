@@ -69,12 +69,12 @@ class QuestionGet(ViewSet):
         description='Returns questions with mode PENGAWASAN for privileged users based on keyword and time range.',
         responses=PaginatedQuestionResponse,
     )
-    def get_all_privileged(self, request):
+    def get_privileged(self, request):
         # query param to determine time range or response
         time_range = request.query_params.get('time_range') 
         keyword =  request.query_params.get('keyword', '')
 
-        questions = self.service_class.get_all_privileged(user=request.user, time_range=time_range, keyword=keyword)
+        questions = self.service_class.get_privileged(user=request.user, time_range=time_range, keyword=keyword)
         serializer = QuestionResponse(questions, many=True)
 
         paginator = self.pagination_class
