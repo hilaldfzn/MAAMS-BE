@@ -67,7 +67,7 @@ class CausesViewTest(APITestCase):
             id=self.causes_uuid2,
             row=1,
             column=1,
-            mode=Causes.ModeChoices.PRIBADI,
+            mode=Causes.ModeChoices.PENGAWASAN,
             cause='',
             status=False
         )
@@ -122,6 +122,13 @@ class CausesViewTest(APITestCase):
         url = reverse(self.get_url, kwargs={'question_id': str(non_existing_pk), 'pk': str(non_existing_pk)})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_cause_forbidden(self):
+        url = reverse(self.get_url, kwargs={'question_id': self.question_uuid2,'pk': self.causes_uuid2})
+        response = self.client.get(url)
+                
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk menghapus analisis ini.")
     
     def test_put_cause_positive(self):
         self.valid_data = {'question_id': str(self.question_uuid1), 'id':self.causes_uuid, 'row': 2, 'column': 2, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
@@ -131,6 +138,15 @@ class CausesViewTest(APITestCase):
         response = self.client.put(url, data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_put_cause_forbidden(self):
+        self.valid_data = {'question_id': str(self.question_uuid2), 'id':self.causes_uuid2, 'row': 2, 'column': 2, 'mode': Causes.ModeChoices.PENGAWASAN, 'cause': 'Updated Cause'}
+
+        url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid2), 'pk': str(self.causes_uuid2)})
+        data = {'question_id': self.question_uuid2, 'id':self.causes_uuid2, 'cause': 'Updated Cause'}
+        response = self.client.put(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_put_cause_invalid_data(self):
         url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid1), 'pk': self.causes_uuid})
@@ -189,8 +205,12 @@ class CausesViewTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(Causes.objects.get(problem=Question.objects.get(pk=self.question_uuid1), row=2).status)
+
+    '''
+    Admin Role Tests
+    '''
     
-    def test_get_cause_superuser(self):
+    def test_get_cause_superuser_forbidden(self):
         self.superuser = CustomUser.objects.create_superuser('admin', 'admin@example.com', 'adminpassword')
         
         response_login = self.client.post(
@@ -203,8 +223,25 @@ class CausesViewTest(APITestCase):
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
 
-        url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid1), 'pk': str(self.causes_uuid)})
-        data = {'question_id': self.question_uuid1, 'id':self.causes_uuid, 'cause': 'Updated Cause'}
-        response = self.client.put(url, data, format='json')
+        url = reverse(self.get_url, kwargs={'question_id': self.question_uuid1,'pk': self.causes_uuid})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_cause_superuser_positive(self):
+        self.superuser = CustomUser.objects.create_superuser('admin', 'admin@example.com', 'adminpassword')
+        
+        response_login = self.client.post(
+            self.url_login,
+            data=json.dumps({'username': 'admin', 'password': 'adminpassword'}),
+            content_type=self.content_type_login,
+        )
+        
+        access_token = response_login.data['access_token']
+        
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
+        url = reverse(self.get_url, kwargs={'question_id': self.question_uuid2,'pk': self.causes_uuid2})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

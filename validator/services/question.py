@@ -31,7 +31,7 @@ class QuestionService():
         if question_object.mode == Question.ModeChoices.PRIBADI and user.uuid != user_id:
             raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
 
-        if question_object.mode == Question.ModeChoices.PENGAWASAN and not (user.is_superuser or user.uuid == user_id):
+        if question_object.mode == Question.ModeChoices.PENGAWASAN and not (user.is_staff or user.is_superuser or user.uuid == user_id):
             raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
 
         return CreateQuestionDataClass(
