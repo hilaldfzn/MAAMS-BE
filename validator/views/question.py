@@ -66,14 +66,15 @@ class QuestionGet(ViewSet):
         return paginator.get_paginated_response(page)
     
     @extend_schema(
-        description='Returns all questions with mode PENGAWASAN for privileged users.',
+        description='Returns questions with mode PENGAWASAN for privileged users based on keyword and time range.',
         responses=PaginatedQuestionResponse,
     )
     def get_all_privileged(self, request):
         # query param to determine time range or response
         time_range = request.query_params.get('time_range') 
+        keyword =  request.query_params.get('keyword', '')
 
-        questions = self.service_class.get_all_privileged(user=request.user, time_range=time_range)
+        questions = self.service_class.search_privileged(user=request.user, time_range=time_range, keyword=keyword)
         serializer = QuestionResponse(questions, many=True)
 
         paginator = self.pagination_class
