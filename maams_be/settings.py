@@ -96,7 +96,6 @@ INSTALLED_APPS = [
     'access_token',
     'authentication',
     'validator',
-    'history',
 ]
 
 # Django REST Framework configurations

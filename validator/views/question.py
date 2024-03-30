@@ -80,6 +80,25 @@ class QuestionGet(ViewSet):
         page = paginator.paginate_queryset(serializer.data, request)
 
         return paginator.get_paginated_response(page)
+    
+    @extend_schema(
+        description='Returns user question that matched with certain keyword',
+        responses=PaginatedQuestionResponse,
+    )
+    def get_matched(self, request):
+        # query param to determine time range or response
+        time_range = request.query_params.get('time_range') 
+        keyword = request.query_params.get('keyword', '') 
+
+        questions = self.service_class.get_matched(user=request.user, 
+                                                   time_range=time_range, 
+                                                   keyword=keyword)
+        serializer = QuestionResponse(questions, many=True)
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(serializer.data, request)
+
+        return paginator.get_paginated_response(page)
 
 @permission_classes([IsAuthenticated])
 class QuestionPut(APIView):
