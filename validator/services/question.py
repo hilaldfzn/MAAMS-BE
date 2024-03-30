@@ -159,6 +159,8 @@ class QuestionService():
     """
     def make_question_response(self, questions) -> list:
         response = []
+        if len(questions) == 0:
+            return response
         for question in questions:
             item = CreateQuestionDataClass(
                 username = question.user.username,
