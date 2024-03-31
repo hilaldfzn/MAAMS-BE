@@ -5,9 +5,9 @@ from authentication.models import CustomUser
 from validator.dataclasses.create_cause import CreateCauseDataClass
 from validator.models import question
 from validator.models.causes import Causes
-from validator.models.question import Question
 from validator.services import question
 from validator.exceptions import NotFoundRequestException, ForbiddenRequestException
+from validator.constants import ErrorMsg
 import uuid
 
 
@@ -68,13 +68,13 @@ class CausesService:
             cause = Causes.objects.get(pk=pk, problem_id = question_id)
             cause_user_uuid = question.Question.objects.get(pk=question_id).user.uuid
         except ObjectDoesNotExist:
-            raise NotFoundRequestException("Sebab tidak ditemukan")    
+            raise NotFoundRequestException(ErrorMsg.CAUSE_NOT_FOUND)    
 
         if user.uuid != cause_user_uuid and cause.mode == Causes.ModeChoices.PRIBADI:
-            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
         if cause.mode == Causes.ModeChoices.PENGAWASAN and not user.is_staff:
-            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
         return CreateCauseDataClass(
             question_id=question_id,
@@ -93,10 +93,10 @@ class CausesService:
             causes.cause = cause
             causes.save()
         except ObjectDoesNotExist:
-            raise NotFoundRequestException("Sebab tidak ditemukan")
+            raise NotFoundRequestException(ErrorMsg.CAUSE_NOT_FOUND)
 
         if user.uuid != question.Question.objects.get(pk=question_id).user.uuid:
-            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk mengedit analisis ini.")
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_UPDATE)
 
         return CreateCauseDataClass(
             question_id=question_id,

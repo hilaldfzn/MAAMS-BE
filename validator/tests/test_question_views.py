@@ -1,12 +1,19 @@
 import json
-from rest_framework.test import APITestCase
-from rest_framework import status
+import uuid
+
 from django.urls import reverse
+
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from authentication.models import CustomUser
+from validator.enums import QuestionType
 from validator.models.question import Question
 from validator.models.causes import Causes
-from authentication.models import CustomUser
-from validator.serializers import QuestionRequest, BaseQuestion
-import uuid
+from validator.serializers import (
+    QuestionRequest, BaseQuestion
+)
+
 from django.core.exceptions import ObjectDoesNotExist
 
 class QuestionViewTest(APITestCase):
@@ -53,6 +60,8 @@ class QuestionViewTest(APITestCase):
         # urls
         self.post_url = 'validator:create_question'
         self.get_url = 'validator:get_question'
+        self.get_all = 'validator:get_question_list'
+        self.get_all_pengawasan = 'validator:get_question_list_pengawasan'
         self.put_url = 'validator:put_question'
         self.delete_url = 'validator:delete_question'
 
@@ -134,7 +143,7 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(causes_count, 1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['id'], str(question.id)) 
+        self.assertEqual(response.data['id'], str(question.id))
         
     def test_get_non_existing_question(self):
         non_existing_pk = uuid.uuid4()
@@ -275,3 +284,46 @@ class QuestionViewTest(APITestCase):
                 
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_all_pengawasan_questions(self):
+        # set user as superuser (for admin testing purposes)
+        self.user1.is_superuser = True
+        self.user1.is_staff = True
+        self.user1.save()
+
+        # reset questions
+        Question.objects.all().delete()
+
+        url = reverse(self.get_all_pengawasan)
+        response = self.client.get(url + '?time_range=last_week')
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+
+        # reset user status
+        self.user1.is_superuser = False
+        self.user1.is_staff = False
+        self.user1.save()
+    
+    
+    def test_get_all_questions(self):
+        Question.objects.all().delete()
+        url = reverse(self.get_all)
+        response = self.client.get(url + '?time_range=last_week')
+        questions = Question.objects.filter(user=self.user1)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+
+    def test_get_all_pengawasan_questions_forbidden(self):
+        # reset user status
+        self.user1.is_superuser = False
+        self.user1.is_staff = False
+        self.user1.save()
+
+        url = reverse(self.get_all_pengawasan)
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
