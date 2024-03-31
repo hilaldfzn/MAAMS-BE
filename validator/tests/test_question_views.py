@@ -319,7 +319,6 @@ class QuestionViewTest(APITestCase):
 
         url = reverse(self.get_all_pengawasan)
         response = self.client.get(url + '?time_range=older')
-        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
@@ -344,7 +343,6 @@ class QuestionViewTest(APITestCase):
         Question.objects.all().delete()
         url = reverse(self.get_all)
         response = self.client.get(url + '?time_range=older')
-        questions = Question.objects.filter(user=self.user1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
