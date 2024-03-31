@@ -63,20 +63,29 @@ class CausesService:
             status=cause.status
         )
 
-    def get(self, question_id: uuid, pk: uuid) -> CreateCauseDataClass:
+    def get(self, user: CustomUser, question_id: uuid, pk: uuid) -> CreateCauseDataClass:
         try:
             cause = Causes.objects.get(pk=pk, problem_id = question_id)
-            return CreateCauseDataClass(
-                question_id=question_id,
-                id=cause.id,
-                row=cause.row,
-                column=cause.column,
-                mode=cause.mode,
-                cause=cause.cause,
-                status=cause.status
-            )
+            cause_user_uuid = question.Question.objects.get(pk=question_id).user.uuid
         except ObjectDoesNotExist:
-            raise NotFoundRequestException("Sebab tidak ditemukan")
+            raise NotFoundRequestException("Sebab tidak ditemukan")    
+
+        if user.uuid != cause_user_uuid and cause.mode == Causes.ModeChoices.PRIBADI:
+            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
+        
+        if cause.mode == Causes.ModeChoices.PENGAWASAN and not user.is_staff:
+            raise ForbiddenRequestException("Pengguna tidak diizinkan untuk melihat analisis ini.")
+        
+        return CreateCauseDataClass(
+            question_id=question_id,
+            id=cause.id,
+            row=cause.row,
+            column=cause.column,
+            mode=cause.mode,
+            cause=cause.cause,
+            status=cause.status
+        )
+        
 
     def update(self, user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
         try:
@@ -86,7 +95,7 @@ class CausesService:
         except ObjectDoesNotExist:
             raise NotFoundRequestException("Sebab tidak ditemukan")
 
-        if user.is_superuser and user.uuid != question.Question.objects.get(pk=question_id).user.uuid:
+        if user.uuid != question.Question.objects.get(pk=question_id).user.uuid:
             raise ForbiddenRequestException("Pengguna tidak diizinkan untuk mengedit analisis ini.")
 
         return CreateCauseDataClass(

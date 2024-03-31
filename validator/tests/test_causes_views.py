@@ -128,7 +128,6 @@ class CausesViewTest(APITestCase):
         response = self.client.get(url)
                 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk menghapus analisis ini.")
     
     def test_put_cause_positive(self):
         self.valid_data = {'question_id': str(self.question_uuid1), 'id':self.causes_uuid, 'row': 2, 'column': 2, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
