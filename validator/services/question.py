@@ -101,7 +101,8 @@ class QuestionService():
                                                     mode=QuestionType.PENGAWASAN.value,
                                                     created_at__lt=last_week_datetime
                                                     ).order_by('-created_at')
-        
+            case _:
+                raise InvalidTimeRangeRequestException(ErrorMsg.INVALID_TIME_RANGE)    
         response = self.make_question_response(questions)
 
         return response
