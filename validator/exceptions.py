@@ -6,3 +6,6 @@ class NotFoundRequestException(APIException):
 
 class ForbiddenRequestException(APIException):
     status_code = status.HTTP_403_FORBIDDEN
+
+class InvalidTimeRangeRequestException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST

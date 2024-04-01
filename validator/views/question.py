@@ -5,7 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from utils.pagination import CustomPageNumberPagination
 
@@ -53,6 +54,26 @@ class QuestionGet(ViewSet):
     @extend_schema(
         description='Returns all questions corresponding to a specified user.',
         responses=PaginatedQuestionResponse,
+        parameters=[
+        OpenApiParameter(
+            name='time_range',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Specify the time range for the query.'
+        ),
+        OpenApiParameter(
+            name='count',
+            type=int,
+            location=OpenApiParameter.QUERY,
+            description='Specify the count of results to return per page.'
+        ),
+        OpenApiParameter(
+            name='p',
+            type=int,
+            location=OpenApiParameter.QUERY,
+            description='Specify the page number for paginated results.'
+        ),
+        ]
     )
     def get_all(self, request):
         # query param to determine time range or response
@@ -68,12 +89,77 @@ class QuestionGet(ViewSet):
     @extend_schema(
         description='Returns all questions with mode PENGAWASAN for privileged users.',
         responses=PaginatedQuestionResponse,
+        parameters=[
+        OpenApiParameter(
+            name='time_range',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Specify the time range for the query.'
+        ),
+        OpenApiParameter(
+            name='count',
+            type=int,
+            location=OpenApiParameter.QUERY,
+            description='Specify the count of results to return per page.'
+        ),
+        OpenApiParameter(
+            name='p',
+            type=int,
+            location=OpenApiParameter.QUERY,
+            description='Specify the page number for paginated results.'
+        ),
+        ]
     )
     def get_all_privileged(self, request):
         # query param to determine time range or response
         time_range = request.query_params.get('time_range') 
 
         questions = self.service_class.get_all_privileged(user=request.user, time_range=time_range)
+        serializer = QuestionResponse(questions, many=True)
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(serializer.data, request)
+
+        return paginator.get_paginated_response(page)
+    
+    @extend_schema(
+        description='Returns user question that matched with certain keyword',
+        responses=PaginatedQuestionResponse,
+        parameters=[
+        OpenApiParameter(
+            name='time_range',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Specify the time range for the query.'
+        ),
+        OpenApiParameter(
+            name='keyword',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Specify the keyword to match user questions.'
+        ),
+        OpenApiParameter(
+            name='count',
+            type=int,
+            location=OpenApiParameter.QUERY,
+            description='Specify the count of results to return per page.'
+        ),
+        OpenApiParameter(
+            name='p',
+            type=int,
+            location=OpenApiParameter.QUERY,
+            description='Specify the page number for paginated results.'
+        ),
+        ]
+    )
+    def get_matched(self, request):
+        # query param to determine time range or response
+        time_range = request.query_params.get('time_range') 
+        keyword = request.query_params.get('keyword', '') 
+
+        questions = self.service_class.get_matched(user=request.user, 
+                                                   time_range=time_range, 
+                                                   keyword=keyword)
         serializer = QuestionResponse(questions, many=True)
 
         paginator = self.pagination_class

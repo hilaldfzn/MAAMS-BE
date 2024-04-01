@@ -4,16 +4,14 @@ from datetime import (
 )
 
 from django.core.exceptions import ObjectDoesNotExist
-
 from authentication.models import CustomUser
 
-from history.enums import HistoryType
-
+from validator.enums import HistoryType
 from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 from validator.enums import QuestionType
 from validator.exceptions import (
-    NotFoundRequestException, ForbiddenRequestException
+    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException
 )
 from validator.models.causes import Causes
 from validator.models.question import Question
@@ -99,6 +97,32 @@ class QuestionService():
                                                     created_at__lt=last_week_datetime
                                                     ).order_by('-created_at')
         
+        response = self.make_question_response(questions)
+
+        return response
+    
+    def get_matched(self, user: CustomUser, time_range: str, keyword: str):
+        """
+        Returns a list of matched questions corresponding to a specified user.
+        """
+
+        today_datetime = datetime.now()
+        last_week_datetime = today_datetime - timedelta(days=7)
+        
+        # get all publicly available questions of mode "PENGAWASAN", depending on time range
+        if time_range == HistoryType.LAST_WEEK.value:
+            questions = Question.objects.filter(user=user, created_at__range=[last_week_datetime, today_datetime],
+                                                question__icontains=keyword,
+                                                ).order_by('-created_at')
+        elif time_range == HistoryType.OLDER.value:
+            questions = Question.objects.filter(user=user, created_at__lt=last_week_datetime,
+                                                question__icontains=keyword,
+                                                ).order_by('-created_at')
+        else:
+            raise InvalidTimeRangeRequestException(ErrorMsg.INVALID_TIME_RANGE)
+             
+
+        # get all questions filtered by user
         response = self.make_question_response(questions)
 
         return response
