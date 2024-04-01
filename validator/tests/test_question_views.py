@@ -359,7 +359,7 @@ class QuestionViewTest(APITestCase):
         self.user1.is_staff = True
         self.user1.save()
         
-        url = reverse(self.get_pengawasan_url)
+        url = reverse(self.get_pengawasan)
         response = self.client.get(url + '?keyword=&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
