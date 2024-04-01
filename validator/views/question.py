@@ -96,6 +96,12 @@ class QuestionGet(ViewSet):
             location=OpenApiParameter.QUERY,
             description='Specify the time range for the query.'
         ),
+         OpenApiParameter(
+            name='keyword',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Specify the keyword to match user questions.'
+        ),
         OpenApiParameter(
             name='count',
             type=int,
