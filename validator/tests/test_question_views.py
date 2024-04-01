@@ -61,8 +61,8 @@ class QuestionViewTest(APITestCase):
         # urls
         self.post_url = 'validator:create_question'
         self.get_url = 'validator:get_question'
-        self.get_all_url = 'validator:get_question_list'
-        self.get_pengawasan_url = 'validator:get_question_list_pengawasan'
+        self.get_all = 'validator:get_question_list'
+        self.get_pengawasan = 'validator:get_question_list_pengawasan'
         self.put_url = 'validator:put_question'
         self.delete_url = 'validator:delete_question'
         self.get_matched = 'validator:get_matched'
@@ -294,7 +294,7 @@ class QuestionViewTest(APITestCase):
         self.user1.is_staff = True
         self.user1.save()
 
-        url = reverse(self.get_pengawasan_url)
+        url = reverse(self.get_pengawasan)
         response = self.client.get(url + '?time_range=last_week')
         questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
@@ -305,20 +305,20 @@ class QuestionViewTest(APITestCase):
         # reset questions
         Question.objects.all().delete()
 
-        url = reverse(self.get_pengawasan_url)
+        url = reverse(self.get_pengawasan)
         response = self.client.get(url + '?time_range=older')
         questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], len(questions))
-    
-    def test_get_pengawasan_forbidden(self):
+
+    def test_get_pengawasan_questions_forbidden(self):
         # reset user status
         self.user1.is_superuser = False
         self.user1.is_staff = False
         self.user1.save()
 
-        url = reverse(self.get_pengawasan_url)
+        url = reverse(self.get_pengawasan)
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -330,7 +330,7 @@ class QuestionViewTest(APITestCase):
         self.user1.is_staff = True
         self.user1.save()
         
-        url = reverse(self.get_pengawasan_url)
+        url = reverse(self.get_pengawasan)
         response = self.client.get(url + '?time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -338,7 +338,7 @@ class QuestionViewTest(APITestCase):
         self.assertIn('results', response.data)
     
     def test_get_pengawasan_invalid_time_range(self):
-        url = reverse(self.get_pengawasan_url)
+        url = reverse(self.get_pengawasan)
         response = self.client.get(url + '?keyword=test&time_range=invalid_format')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -347,7 +347,7 @@ class QuestionViewTest(APITestCase):
     def test_get_pengawasan_unauthorized_access(self):
         # Remove authentication
         self.client.credentials()
-        url = reverse(self.get_pengawasan_url)
+        url = reverse(self.get_pengawasan)
         response = self.client.get(url + '?keyword=test&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -373,7 +373,7 @@ class QuestionViewTest(APITestCase):
         
     def test_get_all_questions_last_week(self):
         Question.objects.all().delete()
-        url = reverse(self.get_all_url)
+        url = reverse(self.get_all)
         response = self.client.get(url + '?time_range=last_week')
         questions = Question.objects.filter(user=self.user1)
 
@@ -382,7 +382,7 @@ class QuestionViewTest(APITestCase):
 
     def test_get_all_questions_older(self):
         Question.objects.all().delete()
-        url = reverse(self.get_all_url)
+        url = reverse(self.get_all)
         response = self.client.get(url + '?time_range=older')
         questions = Question.objects.filter(user=self.user1)
 
