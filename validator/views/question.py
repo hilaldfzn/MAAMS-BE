@@ -52,6 +52,13 @@ class QuestionGet(ViewSet):
         return Response(serializer.data)
     
     @extend_schema(
+        description='Request and Response data to get recent question',
+        responses=QuestionResponse,
+    )
+    def get_recent(self, request):
+        return Response("")
+    
+    @extend_schema(
         description='Returns all questions corresponding to a specified user.',
         responses=PaginatedQuestionResponse,
         parameters=[

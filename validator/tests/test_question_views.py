@@ -66,6 +66,7 @@ class QuestionViewTest(APITestCase):
         self.put_url = 'validator:put_question'
         self.delete_url = 'validator:delete_question'
         self.get_matched = 'validator:get_matched'
+        self.get_recent = 'validator:get_recent'
 
         """
         Question created by user 1
@@ -236,7 +237,6 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk mengubah analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
-        
     def test_delete_question(self):
         url = reverse(self.delete_url, kwargs={'pk': self.question_uuid})
         response = self.client.delete(url)
@@ -286,6 +286,24 @@ class QuestionViewTest(APITestCase):
                 
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+    def test_get_recent_question(self):
+        Question.objects.all().delete()
+        
+        url_old_post = reverse(self.post_url)
+        response__old_post = self.client.post(url_old_post, self.valid_data, format='json')
+        old_post_id = Question.objects.get(id=response__old_post.data['id']).id
+        
+        url_new_post = reverse(self.post_url)
+        response__new_post = self.client.post(url_new_post, self.valid_data, format='json')
+        new_post_id = Question.objects.get(id=response__new_post.data['id']).id
+        
+        url_recent = reverse(self.get_recent)
+        response_recent = self.client.get(url_recent)
+        
+        self.assertEqual(response_recent.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_recent.data['id'], str(new_post_id))
+        self.assertNotEqual(response_recent.data['id'], str(old_post_id))
 
     def test_get_all_pengawasan_questions(self):
         # set user as superuser (for admin testing purposes)
@@ -328,7 +346,6 @@ class QuestionViewTest(APITestCase):
         self.user1.is_superuser = False
         self.user1.is_staff = False
         self.user1.save()
-    
     
     def test_get_all_questions(self):
         Question.objects.all().delete()
