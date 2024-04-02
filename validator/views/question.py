@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from rest_framework.views import APIView
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 
 from drf_spectacular.utils import extend_schema
@@ -87,7 +87,7 @@ class QuestionGet(ViewSet):
         return paginator.get_paginated_response(page)
     
     @extend_schema(
-        description='Returns all questions with mode PENGAWASAN for privileged users.',
+        description='Returns questions with mode PENGAWASAN for privileged users based on keyword and time range.',
         responses=PaginatedQuestionResponse,
         parameters=[
         OpenApiParameter(
@@ -95,6 +95,12 @@ class QuestionGet(ViewSet):
             type=str,
             location=OpenApiParameter.QUERY,
             description='Specify the time range for the query.'
+        ),
+         OpenApiParameter(
+            name='keyword',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Specify the keyword to match user questions.'
         ),
         OpenApiParameter(
             name='count',
@@ -110,11 +116,12 @@ class QuestionGet(ViewSet):
         ),
         ]
     )
-    def get_all_privileged(self, request):
+    def get_privileged(self, request):
         # query param to determine time range or response
         time_range = request.query_params.get('time_range') 
+        keyword =  request.query_params.get('keyword', '')
 
-        questions = self.service_class.get_all_privileged(user=request.user, time_range=time_range)
+        questions = self.service_class.get_privileged(user=request.user, time_range=time_range, keyword=keyword)
         serializer = QuestionResponse(questions, many=True)
 
         paginator = self.pagination_class

@@ -75,28 +75,34 @@ class QuestionService():
 
         return response
     
-    def get_all_privileged(self, user: CustomUser, time_range: str):
+    def get_privileged(self, user: CustomUser, time_range: str, keyword: str):
         """
-        Returns a list of  all questions corresponding to a specified user.
+        Return a list for pengawasan questions by keyword and time range for privileged users.
         """
         # allow only superuser/staff (admins) to access resource
         if not user.is_superuser or not user.is_staff:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
+        if not keyword:
+            keyword = ''
+            
         today_datetime = datetime.now()
         last_week_datetime = today_datetime - timedelta(days=7)
         
         # get all publicly available questions of mode "PENGAWASAN", depending on time range
         match time_range:
             case HistoryType.LAST_WEEK.value:
-                questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value,
+                questions = Question.objects.filter(question__icontains=keyword,
+                                                    mode=QuestionType.PENGAWASAN.value,
                                                     created_at__range=[last_week_datetime, today_datetime]
                                                     ).order_by('-created_at')
             case HistoryType.OLDER.value:
-                questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value,
+                questions = Question.objects.filter(question__icontains=keyword,
+                                                    mode=QuestionType.PENGAWASAN.value,
                                                     created_at__lt=last_week_datetime
                                                     ).order_by('-created_at')
-        
+            case _:
+                raise InvalidTimeRangeRequestException(ErrorMsg.INVALID_TIME_RANGE)    
         response = self.make_question_response(questions)
 
         return response
@@ -178,6 +184,8 @@ class QuestionService():
     """
     def make_question_response(self, questions) -> list:
         response = []
+        if len(questions) == 0:
+            return response
         for question in questions:
             item = CreateQuestionDataClass(
                 username = question.user.username,
