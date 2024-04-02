@@ -289,13 +289,12 @@ class QuestionViewTest(APITestCase):
         
     def test_get_recent_question(self):
         Question.objects.all().delete()
+        url_post = reverse(self.post_url)
         
-        url_old_post = reverse(self.post_url)
-        response__old_post = self.client.post(url_old_post, self.valid_data, format='json')
+        response__old_post = self.client.post(url_post, self.valid_data, format='json')
         old_post_id = Question.objects.get(id=response__old_post.data['id']).id
         
-        url_new_post = reverse(self.post_url)
-        response__new_post = self.client.post(url_new_post, self.valid_data, format='json')
+        response__new_post = self.client.post(url_post, self.valid_data, format='json')
         new_post_id = Question.objects.get(id=response__new_post.data['id']).id
         
         url_recent = reverse(self.get_recent)
@@ -304,6 +303,15 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response_recent.status_code, status.HTTP_200_OK)
         self.assertEqual(response_recent.data['id'], str(new_post_id))
         self.assertNotEqual(response_recent.data['id'], str(old_post_id))
+        
+    def test_get_recent_none(self):
+        Question.objects.all().delete()
+        url_recent = reverse(self.get_recent)
+        response_recent = self.client.get(url_recent)
+        
+        self.assertEqual(response_recent.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_recent.data['id'], None)
+        
 
     def test_get_all_pengawasan_questions(self):
         # set user as superuser (for admin testing purposes)

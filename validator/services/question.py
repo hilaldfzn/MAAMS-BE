@@ -46,9 +46,9 @@ class QuestionService():
         if question_object.mode == Question.ModeChoices.PENGAWASAN and not (user.is_superuser or user.uuid == user_id):
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
-        response = self.make_question_response(question_object)
+        response = self.make_question_response([question_object])
 
-        return response
+        return response[0]
     
     def get_all(self, user: CustomUser,time_range: str):
         """
@@ -69,6 +69,17 @@ class QuestionService():
                 
         # get all questions filtered by user
         response = self.make_question_response(questions)
+
+        return response
+    
+    def get_recent(self, user: CustomUser):
+        recent_question = Question.objects.filter(user=user).order_by('created_at').last()
+
+        if (recent_question):
+            response = self.make_question_response([recent_question])
+            response = response[0]
+        else:
+            response = recent_question
 
         return response
     
@@ -174,10 +185,8 @@ class QuestionService():
     Utility functions.
     """
     def make_question_response(self, questions) -> list:
-        if not isinstance(questions, Iterable):
-            questions = [questions]
-        
         response = []
+        
         for question in questions:
             item = CreateQuestionDataClass(
                 username = question.user.username,
@@ -188,6 +197,4 @@ class QuestionService():
             )
             response.append(item)
             
-        if len(response) == 1:
-            response = response[0]
         return response
