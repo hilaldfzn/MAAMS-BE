@@ -73,7 +73,7 @@ class QuestionService():
         return response
     
     def get_recent(self, user: CustomUser):
-        recent_question = Question.objects.filter(user=user).order_by('created_at').last()
+        recent_question = Question.objects.filter(user=user).order_by('-created_at').first()
 
         if (recent_question):
             response = self.make_question_response([recent_question])
