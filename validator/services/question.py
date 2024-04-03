@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import uuid
 from datetime import (
     datetime, timedelta
@@ -44,14 +45,10 @@ class QuestionService():
 
         if question_object.mode == Question.ModeChoices.PENGAWASAN and not (user.is_superuser or user.uuid == user_id):
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
+        
+        response = self.make_question_response([question_object])
 
-        return CreateQuestionDataClass(
-            username = question_object.user.username,
-            id = question_object.id,
-            question = question_object.question,
-            created_at = question_object.created_at,
-            mode = question_object.mode
-        )
+        return response[0]
     
     def get_all(self, user: CustomUser,time_range: str):
         """
@@ -72,6 +69,17 @@ class QuestionService():
                 
         # get all questions filtered by user
         response = self.make_question_response(questions)
+
+        return response
+    
+    def get_recent(self, user: CustomUser):
+        recent_question = Question.objects.filter(user=user).order_by('-created_at').first()
+
+        if (recent_question):
+            response = self.make_question_response([recent_question])
+            response = response[0]
+        else:
+            response = recent_question
 
         return response
     
@@ -195,4 +203,5 @@ class QuestionService():
                 mode = question.mode
             )
             response.append(item)
+            
         return response
