@@ -1,11 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from validator.services.causes import CausesService
-from validator.services.question import QuestionService
 from validator.serializers import CausesRequest, CausesResponse, BaseCauses
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated
 
+@permission_classes([IsAuthenticated])
 class CausesPost(APIView):
     @extend_schema(
         description='Request and Response data for creating a cause',
@@ -20,17 +22,19 @@ class CausesPost(APIView):
 
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
+@permission_classes([IsAuthenticated])
 class CausesGet(APIView):
     @extend_schema(
         description='Request and Response data to get a cause',
         responses=CausesResponse,
     )
     def get(self, request, question_id, pk):
-        cause = CausesService.get(self=CausesService, question_id=question_id, pk=pk)
+        cause = CausesService.get(self=CausesService, user=request.user, question_id=question_id, pk=pk)
         serializer = CausesResponse(cause)
 
         return Response(serializer.data)
 
+@permission_classes([IsAuthenticated])
 class CausesPut(APIView):
     @extend_schema(
         description='Request and Response data for updating a cause',
@@ -40,11 +44,12 @@ class CausesPut(APIView):
     def put(self, request, question_id, pk):
         request_serializer = BaseCauses(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        cause = CausesService.update(self=CausesService, question_id=question_id, pk=pk, **request_serializer.validated_data)
+        cause = CausesService.update(self=CausesService, user=request.user, question_id=question_id, pk=pk, **request_serializer.validated_data)
         response_serializer = CausesResponse(cause)
 
         return Response(response_serializer.data)
 
+@permission_classes([IsAuthenticated])
 class ValidateView(APIView):
     @extend_schema(
         description='Run Root Cause Analysis for a specific question and row',

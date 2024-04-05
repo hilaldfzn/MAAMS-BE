@@ -1,19 +1,18 @@
+from collections.abc import Iterable
 import uuid
 from datetime import (
     datetime, timedelta
 )
 
 from django.core.exceptions import ObjectDoesNotExist
-
 from authentication.models import CustomUser
 
-from history.enums import HistoryType
-
+from validator.enums import HistoryType
 from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 from validator.enums import QuestionType
 from validator.exceptions import (
-    NotFoundRequestException, ForbiddenRequestException
+    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException
 )
 from validator.models.causes import Causes
 from validator.models.question import Question
@@ -44,16 +43,12 @@ class QuestionService():
         if question_object.mode == Question.ModeChoices.PRIBADI and user.uuid != user_id:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
 
-        if question_object.mode == Question.ModeChoices.PENGAWASAN and not (user.is_superuser or user.uuid == user_id):
+        if question_object.mode == Question.ModeChoices.PENGAWASAN and not (user.is_staff or user.is_superuser or user.uuid == user_id):
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
+        
+        response = self.make_question_response([question_object])
 
-        return CreateQuestionDataClass(
-            username = question_object.user.username,
-            id = question_object.id,
-            question = question_object.question,
-            created_at = question_object.created_at,
-            mode = question_object.mode
-        )
+        return response[0]
     
     def get_all(self, user: CustomUser,time_range: str):
         """
@@ -77,28 +72,71 @@ class QuestionService():
 
         return response
     
-    def get_all_privileged(self, user: CustomUser, time_range: str):
+    def get_recent(self, user: CustomUser):
+        recent_question = Question.objects.filter(user=user).order_by('-created_at').first()
+
+        if (recent_question):
+            response = self.make_question_response([recent_question])
+            response = response[0]
+        else:
+            response = recent_question
+
+        return response
+    
+    def get_privileged(self, user: CustomUser, time_range: str, keyword: str):
         """
-        Returns a list of  all questions corresponding to a specified user.
+        Return a list for pengawasan questions by keyword and time range for privileged users.
         """
         # allow only superuser/staff (admins) to access resource
         if not user.is_superuser or not user.is_staff:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
+        if not keyword:
+            keyword = ''
+            
         today_datetime = datetime.now()
         last_week_datetime = today_datetime - timedelta(days=7)
         
         # get all publicly available questions of mode "PENGAWASAN", depending on time range
         match time_range:
             case HistoryType.LAST_WEEK.value:
-                questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value,
+                questions = Question.objects.filter(question__icontains=keyword,
+                                                    mode=QuestionType.PENGAWASAN.value,
                                                     created_at__range=[last_week_datetime, today_datetime]
                                                     ).order_by('-created_at')
             case HistoryType.OLDER.value:
-                questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value,
+                questions = Question.objects.filter(question__icontains=keyword,
+                                                    mode=QuestionType.PENGAWASAN.value,
                                                     created_at__lt=last_week_datetime
                                                     ).order_by('-created_at')
+            case _:
+                raise InvalidTimeRangeRequestException(ErrorMsg.INVALID_TIME_RANGE)    
+        response = self.make_question_response(questions)
+
+        return response
+    
+    def get_matched(self, user: CustomUser, time_range: str, keyword: str):
+        """
+        Returns a list of matched questions corresponding to a specified user.
+        """
+
+        today_datetime = datetime.now()
+        last_week_datetime = today_datetime - timedelta(days=7)
         
+        # get all publicly available questions of mode "PENGAWASAN", depending on time range
+        if time_range == HistoryType.LAST_WEEK.value:
+            questions = Question.objects.filter(user=user, created_at__range=[last_week_datetime, today_datetime],
+                                                question__icontains=keyword,
+                                                ).order_by('-created_at')
+        elif time_range == HistoryType.OLDER.value:
+            questions = Question.objects.filter(user=user, created_at__lt=last_week_datetime,
+                                                question__icontains=keyword,
+                                                ).order_by('-created_at')
+        else:
+            raise InvalidTimeRangeRequestException(ErrorMsg.INVALID_TIME_RANGE)
+             
+
+        # get all questions filtered by user
         response = self.make_question_response(questions)
 
         return response
@@ -154,6 +192,8 @@ class QuestionService():
     """
     def make_question_response(self, questions) -> list:
         response = []
+        if len(questions) == 0:
+            return response
         for question in questions:
             item = CreateQuestionDataClass(
                 username = question.user.username,
@@ -163,4 +203,5 @@ class QuestionService():
                 mode = question.mode
             )
             response.append(item)
+            
         return response

@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import uuid
 
@@ -61,9 +62,11 @@ class QuestionViewTest(APITestCase):
         self.post_url = 'validator:create_question'
         self.get_url = 'validator:get_question'
         self.get_all = 'validator:get_question_list'
-        self.get_all_pengawasan = 'validator:get_question_list_pengawasan'
+        self.get_pengawasan = 'validator:get_question_list_pengawasan'
         self.put_url = 'validator:put_question'
         self.delete_url = 'validator:delete_question'
+        self.get_matched = 'validator:get_matched'
+        self.get_recent = 'validator:get_recent'
 
         """
         Question created by user 1
@@ -234,7 +237,6 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk mengubah analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
-        
     def test_delete_question(self):
         url = reverse(self.delete_url, kwargs={'pk': self.question_uuid})
         response = self.client.delete(url)
@@ -285,29 +287,115 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_get_all_pengawasan_questions(self):
+    def test_get_recent_question(self):
+        Question.objects.all().delete()
+        url_post = reverse(self.post_url)
+        
+        response__old_post = self.client.post(url_post, self.valid_data, format='json')
+        old_post_id = Question.objects.get(id=response__old_post.data['id']).id
+        
+        response__new_post = self.client.post(url_post, self.valid_data, format='json')
+        new_post_id = Question.objects.get(id=response__new_post.data['id']).id
+        
+        url_recent = reverse(self.get_recent)
+        response_recent = self.client.get(url_recent)
+        
+        self.assertEqual(response_recent.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_recent.data['id'], str(new_post_id))
+        self.assertNotEqual(response_recent.data['id'], str(old_post_id))
+        
+    def test_get_recent_none(self):
+        Question.objects.all().delete()
+        url_recent = reverse(self.get_recent)
+        response_recent = self.client.get(url_recent)
+        
+        self.assertEqual(response_recent.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_recent.data['id'], None)
+
+    def test_get_pengawasan_last_week(self):
         # set user as superuser (for admin testing purposes)
         self.user1.is_superuser = True
         self.user1.is_staff = True
         self.user1.save()
 
-        # reset questions
-        Question.objects.all().delete()
-
-        url = reverse(self.get_all_pengawasan)
+        url = reverse(self.get_pengawasan)
         response = self.client.get(url + '?time_range=last_week')
         questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], len(questions))
 
+    def test_get_pengawasan_older(self):
+        # reset questions
+        Question.objects.all().delete()
+
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?time_range=older')
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+
+    def test_get_pengawasan_questions_forbidden(self):
         # reset user status
         self.user1.is_superuser = False
         self.user1.is_staff = False
         self.user1.save()
+
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
     
+    def test_get_pengawasan_no_keyword(self):
+        # set user as superuser (for admin testing purposes)
+        self.user1.is_superuser = True
+        self.user1.is_staff = True
+        self.user1.save()
+        
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?time_range=last_week')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('count', response.data)
+        self.assertIn('results', response.data)
     
-    def test_get_all_questions(self):
+    def test_get_pengawasan_invalid_time_range(self):
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?keyword=test&time_range=invalid_format')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], "Invalid time range format.")
+    
+    def test_get_pengawasan_unauthorized_access(self):
+        # Remove authentication
+        self.client.credentials()
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?keyword=test&time_range=last_week')
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
+    
+    def test_get_pengawasan_empty_keyword(self):
+        # set user as superuser (for admin testing purposes)
+        self.user1.is_superuser = True
+        self.user1.is_staff = True
+        self.user1.save()
+        
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?keyword=&time_range=last_week')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('count', response.data)
+        self.assertIn('results', response.data)
+
+        # reset user status
+        self.user1.is_superuser = False
+        self.user1.is_staff = False
+        self.user1.save()
+        
+    def test_get_all_questions_last_week(self):
         Question.objects.all().delete()
         url = reverse(self.get_all)
         response = self.client.get(url + '?time_range=last_week')
@@ -316,14 +404,59 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], len(questions))
 
-    def test_get_all_pengawasan_questions_forbidden(self):
-        # reset user status
-        self.user1.is_superuser = False
-        self.user1.is_staff = False
-        self.user1.save()
+    def test_get_all_questions_older(self):
+        Question.objects.all().delete()
+        url = reverse(self.get_all)
+        response = self.client.get(url + '?time_range=older')
+        questions = Question.objects.filter(user=self.user1)
 
-        url = reverse(self.get_all_pengawasan)
-        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+        
+    def test_get_matched(self):
+        url = reverse(self.get_matched)
+        response = self.client.get(url + '?keyword=test&time_range=last_week')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('count', response.data)
+        self.assertIn('results', response.data)
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk melihat analisis ini.")
+    def test_get_matched_no_keyword(self):
+        url = reverse(self.get_matched)
+        response = self.client.get(url + '?time_range=last_week')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('count', response.data)
+        self.assertIn('results', response.data)
+
+    def test_get_matched_invalid_time_range(self):
+        url = reverse(self.get_matched)
+        response = self.client.get(url + '?keyword=test&time_range=invalid_format')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], "Invalid time range format.")
+
+    def test_get_matched_unauthorized_access(self):
+        # Remove authentication
+        self.client.credentials()
+        url = reverse(self.get_matched)
+        response = self.client.get(url + '?keyword=test&time_range=last_week')
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
+   
+    def test_get_matched_empty_keyword(self):
+        url = reverse(self.get_matched)
+        response = self.client.get(url + '?keyword=&time_range=last_week')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('count', response.data)
+        self.assertIn('results', response.data)
+
+    def test_get_matched_older_questions(self):
+        url = reverse(self.get_matched)
+        response = self.client.get(url + '?keyword=test&time_range=older')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('count', response.data)
+        self.assertIn('results', response.data)
