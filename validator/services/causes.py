@@ -73,7 +73,7 @@ class CausesService:
         if user.uuid != cause_user_uuid and cause.mode == Causes.ModeChoices.PRIBADI:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
-        if cause.mode == Causes.ModeChoices.PENGAWASAN and not user.is_staff:
+        if cause.mode == Causes.ModeChoices.PENGAWASAN and not user.is_staff and user.uuid != cause_user_uuid:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
         return CreateCauseDataClass(
