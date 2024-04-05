@@ -1,14 +1,16 @@
 import openai
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from authentication.models import CustomUser
 from validator.dataclasses.create_cause import CreateCauseDataClass
 from validator.models import question
 from validator.models.causes import Causes
 from validator.services import question
-from authentication.models import CustomUser
-from validator.exceptions import NotFoundRequestException
+from validator.exceptions import NotFoundRequestException, ForbiddenRequestException
+from validator.constants import ErrorMsg
 import uuid
-import math
+
+
 class CausesService:
     def api_call(self, prompt: str):
         openai.api_key = settings.OPENAI_API_KEY
@@ -61,35 +63,48 @@ class CausesService:
             status=cause.status
         )
 
-    def get(self, question_id: uuid, pk: uuid) -> CreateCauseDataClass:
+    def get(self, user: CustomUser, question_id: uuid, pk: uuid) -> CreateCauseDataClass:
         try:
             cause = Causes.objects.get(pk=pk, problem_id = question_id)
-            return CreateCauseDataClass(
-                question_id=question_id,
-                id=cause.id,
-                row=cause.row,
-                column=cause.column,
-                mode=cause.mode,
-                cause=cause.cause,
-                status=cause.status
-            )
+            cause_user_uuid = question.Question.objects.get(pk=question_id).user.uuid
         except ObjectDoesNotExist:
-            raise NotFoundRequestException("Sebab tidak ditemukan")
+            raise NotFoundRequestException(ErrorMsg.CAUSE_NOT_FOUND)    
 
-    def update(self, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
+        if user.uuid != cause_user_uuid and cause.mode == Causes.ModeChoices.PRIBADI:
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
+        
+        if cause.mode == Causes.ModeChoices.PENGAWASAN and not user.is_staff and user.uuid != cause_user_uuid:
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
+        
+        return CreateCauseDataClass(
+            question_id=question_id,
+            id=cause.id,
+            row=cause.row,
+            column=cause.column,
+            mode=cause.mode,
+            cause=cause.cause,
+            status=cause.status
+        )
+        
+
+    def update(self, user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
         try:
             causes = Causes.objects.get(problem_id = question_id, pk=pk)
             causes.cause = cause
             causes.save()
-
-            return CreateCauseDataClass(
-                question_id=question_id,
-                id=causes.id,
-                row=causes.row,
-                column=causes.column,
-                mode=causes.mode,
-                cause=causes.cause,
-                status=causes.status
-            )
         except ObjectDoesNotExist:
-            raise NotFoundRequestException("Sebab tidak ditemukan")
+            raise NotFoundRequestException(ErrorMsg.CAUSE_NOT_FOUND)
+
+        if user.uuid != question.Question.objects.get(pk=question_id).user.uuid:
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_UPDATE)
+
+        return CreateCauseDataClass(
+            question_id=question_id,
+            id=causes.id,
+            row=causes.row,
+            column=causes.column,
+            mode=causes.mode,
+            cause=causes.cause,
+            status=causes.status
+        )
+        
