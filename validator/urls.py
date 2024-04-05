@@ -14,7 +14,9 @@ urlpatterns = [
     # questions
     path('', QuestionGet.as_view({ "get": "get_all"}), name="get_question_list"),
     path('<uuid:pk>/', QuestionGet.as_view({ 'get': 'get' }), name="get_question"),
-    path('pengawasan/', QuestionGet.as_view({ 'get': 'get_all_privileged' }), name="get_question_list_pengawasan"),
+    path('recent/', QuestionGet.as_view({ 'get': 'get_recent' }), name="get_recent"),
+    path('search/', QuestionGet.as_view({ 'get': 'get_matched' }), name="get_matched"),
+    path('pengawasan/', QuestionGet.as_view({ 'get': 'get_privileged' }), name="get_question_list_pengawasan"),
     path('baru/', QuestionPost.as_view(), name="create_question"),
     path('ubah/<uuid:pk>/', QuestionPut.as_view(), name="put_question"),
     # causes
