@@ -1,7 +1,7 @@
 from django.db import models
 import uuid
 
-from pydantic import ValidationError
+from django.core.exceptions import ValidationError
 from authentication.models import CustomUser
 from .tag import Tag
 
@@ -19,9 +19,4 @@ class Question(models.Model):
     question = models.CharField()
     mode = models.CharField(max_length = 20, choices=ModeChoices.choices, default=ModeChoices.PRIBADI)
     created_at = models.DateTimeField(auto_now_add=True)
-    tags = models.ManyToManyField(Tag)
-
-    def clean(self):
-        super().clean()
-        if not self.tags.exists():
-            raise ValidationError("Each question must have at least one tag associated with it.")
+    tags = models.ManyToManyField(Tag, blank=False)

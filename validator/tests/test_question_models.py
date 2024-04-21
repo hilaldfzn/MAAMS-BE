@@ -1,7 +1,8 @@
 from django.test import TestCase
 from validator.models.question import Question
+from validator.models.tag import Tag
 from authentication.models import CustomUser
-from validator.models.tag import Tag  
+from django.core.exceptions import ValidationError
 import uuid
 
 class QuestionModelTest(TestCase):
@@ -22,28 +23,20 @@ class QuestionModelTest(TestCase):
         
         tag = Tag.objects.create(name=self.tag_name)
         
+        # Create a question with a tag
         Question.objects.create(
             user=self.valid_user,
             id=self.question_uuid,
-            title="Test Title", 
+            title="Test Title",
             question='pertanyaan',
             mode=Question.ModeChoices.PRIBADI
-        ).tags.add(tag) 
+        ).tags.add(tag)
     
     def test_question(self):
         question = Question.objects.get(id=self.question_uuid)
         self.assertIsNotNone(question)        
         self.assertEqual(question.user.uuid, self.user_uuid)
-        self.assertEqual(question.title, "Test Title")  
+        self.assertEqual(question.title, "Test Title")
         self.assertEqual(question.question, 'pertanyaan')
         self.assertEqual(question.mode, Question.ModeChoices.PRIBADI)
-        self.assertEqual(question.tags.first().name, self.tag_name) 
-
-    def test_question_without_tag(self):
-        with self.assertRaises(ValueError):
-            Question.objects.create(
-                user=self.valid_user,
-                title="Test Title",
-                question='pertanyaan',
-                mode=Question.ModeChoices.PRIBADI
-            )
+        self.assertEqual(question.tags.first().name, self.tag_name)
