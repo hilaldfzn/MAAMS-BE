@@ -15,3 +15,7 @@ class TagModelTest(TestCase):
         tag = Tag.objects.get(name=self.tag_name)
         self.assertIsNotNone(tag)
         self.assertEqual(tag.name, self.tag_name)
+
+    def test_tag_str_representation(self):
+        tag = Tag.objects.get(name=self.tag_name)
+        self.assertEqual(str(tag), self.tag_name)
