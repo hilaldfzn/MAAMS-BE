@@ -38,3 +38,12 @@ class QuestionModelTest(TestCase):
         self.assertEqual(question.question, 'pertanyaan')
         self.assertEqual(question.mode, Question.ModeChoices.PRIBADI)
         self.assertEqual(question.tags.first().name, self.tag_name) 
+
+    def test_question_without_tag(self):
+        with self.assertRaises(ValueError):
+            Question.objects.create(
+                user=self.valid_user,
+                title="Test Title",
+                question='pertanyaan',
+                mode=Question.ModeChoices.PRIBADI
+            )
