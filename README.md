@@ -73,7 +73,7 @@
     DB_NAME=<your local DB name>
 
     OPENAI_API_KEY=<your openAI API token>
-    SENTRY_DSN=https://31f56431c33c65824160b16b53e45d87@o4507120203202560.ingest.us.sentry.io/4507120208773120
+    SENTRY_DSN=<your sentry dsn>
     ```
 
 5. Initialize database tables
