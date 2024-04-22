@@ -11,6 +11,7 @@ from authentication.models import CustomUser
 from validator.enums import QuestionType
 from validator.models.question import Question
 from validator.models.causes import Causes
+from validator.models.tag import Tag
 from validator.serializers import (
     QuestionRequest, BaseQuestion
 )
@@ -46,12 +47,24 @@ class QuestionViewTest(APITestCase):
         self.user2.save()
         
         # valid data
-        self.valid_data = {'question': 'Test question', 'mode': Question.ModeChoices.PRIBADI}
+        self.valid_data = {
+            'title': 'Question 1',
+            'question': 'Test question', 
+            'mode': Question.ModeChoices.PRIBADI,
+            'tags': ['economy', 'analysis']
+        }
         self.valid_data_put = {'id': self.question_uuid, 'mode': Question.ModeChoices.PENGAWASAN}
 
         # invalid data for post
         self.invalid_data_missing = {'question': 'Test question missing', 'mode': ''}
         self.invalid_data = {'question': 'Test question invalid', 'mode': 'invalid'}
+        self.invalid_data_empty_tags = {
+            'title': 'test',
+            'question': 'Test question empty tags', 
+            'mode': 'PRIBADI',
+            'tags': []
+        }
+
         
         # invalid data for put
         self.invalid_data_put = {'id': self.question_uuid, 'mode': 'invalid'}
@@ -69,14 +82,22 @@ class QuestionViewTest(APITestCase):
         self.get_recent = 'validator:get_recent'
 
         """
+        Create some tags
+        """
+        tag1 = Tag.objects.create(name="tag1")
+        tag2 = Tag.objects.create(name="tag2")
+
+        """
         Question created by user 1
         """
         self.question1 = Question.objects.create(
             user=self.user1,
             id=self.question_uuid, 
+            title='pertanyaan 1',
             question='pertanyaan 1',
             mode=Question.ModeChoices.PRIBADI
         )
+        self.question1.tags.add(tag1, tag2)
                 
         self.causes_uuid = uuid.uuid4()
         Causes.objects.create(
@@ -92,30 +113,35 @@ class QuestionViewTest(APITestCase):
         """
         Question created by user 2
         """
-        Question.objects.create(
+        self.question2 = Question.objects.create(
             user=self.user2,
             id=self.question_uuid2, 
             question='pertanyaan 2',
+            title='pertanyaan 2',
             mode=Question.ModeChoices.PRIBADI
         )
-        
+        self.question2.tags.add(tag2)
                 
         """
         Supervised Questions
         """
-        self.question_super = Question.objects.create(
+        self.question_super1 = Question.objects.create(
             user=self.user1,
             id=self.question_uuid_super, 
+            title='pertanyaan supervised 1',
             question='pertanyaan supervised',
             mode=Question.ModeChoices.PENGAWASAN
         )
+        self.question_super1.tags.add(tag1)
         
-        self.question_super = Question.objects.create(
+        self.question_super2 = Question.objects.create(
             user=self.user2,
             id=self.question_uuid_super2, 
+            title='pertanyaan supervised 2',
             question='pertanyaan supervised',
             mode=Question.ModeChoices.PENGAWASAN
         )
+        self.question_super2.tags.add(tag2)
         
         """
         User login
@@ -185,6 +211,11 @@ class QuestionViewTest(APITestCase):
         serializer = QuestionRequest(data=self.invalid_data)
         
         self.assertFalse(serializer.is_valid())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_empty_tags(self):
+        url = reverse(self.post_url)
+        response = self.client.post(url, self.invalid_data_empty_tags, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_post_question_invalid_value(self):

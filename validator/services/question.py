@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import List
 import uuid
 from datetime import (
     datetime, timedelta
@@ -12,24 +13,45 @@ from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 from validator.enums import QuestionType
 from validator.exceptions import (
-    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException
+    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException, EmptyTagException
 )
 from validator.models.causes import Causes
 from validator.models.question import Question
+from validator.models.tag import Tag
 from validator.serializers import Question
 
 
 class QuestionService():
     
-    def create(self, user: CustomUser, question: str, mode: str):
-        question_object = Question.objects.create(user=user, question=question, mode=mode)
+    def create(self, user: CustomUser, title:str, question: str, mode: str, tags: List[str]):
+        if not tags:
+            raise EmptyTagException(ErrorMsg.EMPTY_TAG)
+        tags_object = []
         
+        for tag_name in tags:
+            try:
+                tag = Tag.objects.get(name=tag_name)
+            except Tag.DoesNotExist:
+                tag = Tag.objects.create(name=tag_name)
+            finally:
+                tags_object.append(tag)
+                
+        question_object = Question.objects.create(user=user, title=title, 
+                                                  question=question, mode=mode)
+
+        for tag in tags_object:
+            question_object.tags.add(tag)
+        
+        tags = [tag.name for tag in question_object.tags.all()]
+
         return CreateQuestionDataClass(
             username = question_object.user.username,
             id = question_object.id,
+            title=question_object.title,
             question = question_object.question,
             created_at = question_object.created_at,
-            mode = question_object.mode
+            mode = question_object.mode,
+            tags=tags
         )
     
     def get(self, user:CustomUser, pk:uuid):
@@ -155,12 +177,15 @@ class QuestionService():
         question_object.mode = mode
         question_object.save()
         
+        tags = [tag.name for tag in question_object.tags.all()]
         return CreateQuestionDataClass(
             username = question_object.user.username,
             id = question_object.id,
+            title=question_object.title,
             question = question_object.question,
             created_at = question_object.created_at,
-            mode = question_object.mode
+            mode = question_object.mode,
+            tags=tags
         )
         
     def delete(self, user:CustomUser, pk:uuid):
@@ -174,12 +199,15 @@ class QuestionService():
         if user.uuid != user_id:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_DELETE)
         
+        tags = [tag.name for tag in question_object.tags.all()]
         question_data = CreateQuestionDataClass(
             username = question_object.user.username,
             id = question_object.id,
+            title=question_object.title,
             question = question_object.question,
             created_at = question_object.created_at,
-            mode = question_object.mode
+            mode = question_object.mode,
+            tags=tags
         )
         related_causes = Causes.objects.filter(problem=question_object)
         related_causes.delete()
@@ -195,12 +223,15 @@ class QuestionService():
         if len(questions) == 0:
             return response
         for question in questions:
+            tags = [tag.name for tag in question.tags.all()]
             item = CreateQuestionDataClass(
                 username = question.user.username,
                 id = question.id,
+                title=question.title,
                 question = question.question,
                 created_at = question.created_at,
-                mode = question.mode
+                mode = question.mode,
+                tags=tags
             )
             response.append(item)
             

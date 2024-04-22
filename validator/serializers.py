@@ -17,17 +17,20 @@ class QuestionRequest(BaseQuestion):
     class Meta:
         ref_name = 'QuestionRequest'
 
+    title = serializers.CharField()
     question = serializers.CharField()
-    
+    tags = serializers.ListField(child=serializers.CharField())    
 
 class QuestionResponse(BaseQuestion):
     class Meta:
         ref_name = 'QuestionResponse'
     
     id = serializers.UUIDField()
+    title = serializers.CharField()
     question = serializers.CharField()
     created_at = serializers.DateTimeField()
     username = serializers.CharField()
+    tags = serializers.ListField(child=serializers.CharField())    
 
 
 class PaginatedQuestionResponse(serializers.Serializer):
