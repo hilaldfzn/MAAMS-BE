@@ -194,7 +194,7 @@ class QuestionPatch(ViewSet):
     def patch_mode(self, request, pk):
         request_serializer = BaseQuestion(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        question = QuestionService.update_mode(self, user=request.user, pk=pk, **request_serializer.validated_data)
+        question = QuestionService.update_question(self, user=request.user, pk=pk, mode=request_serializer.validated_data.get('mode'))
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data)
@@ -207,7 +207,7 @@ class QuestionPatch(ViewSet):
     def patch_title(self, request, pk):
         request_serializer = QuestionTitleRequest(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        question = QuestionService.update_title(self, user=request.user, pk=pk, **request_serializer.validated_data)
+        question = QuestionService.update_question(self, user=request.user, pk=pk, title=request_serializer.validated_data.get('title'))
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data)
