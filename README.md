@@ -53,7 +53,7 @@
 
     ```.env
     # ACTIVE ENVIRONMENT
-    ENVIRONMENT=DEVELOPMENT
+    ENVIRONMENT=LOCAL
     ```
 
     `.env.dev`:
