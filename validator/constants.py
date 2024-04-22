@@ -5,3 +5,4 @@ class ErrorMsg:
     FORBIDDEN_UPDATE = "Pengguna tidak diizinkan untuk mengubah analisis ini."
     FORBIDDEN_DELETE = "Pengguna tidak diizinkan untuk menghapus analisis ini."
     INVALID_TIME_RANGE = 'Invalid time range format.'
+    EMPTY_TAG = "At least one tag must be provided."

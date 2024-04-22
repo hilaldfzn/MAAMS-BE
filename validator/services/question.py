@@ -13,7 +13,7 @@ from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 from validator.enums import QuestionType
 from validator.exceptions import (
-    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException
+    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException, EmptyTagException
 )
 from validator.models.causes import Causes
 from validator.models.question import Question
@@ -24,6 +24,8 @@ from validator.serializers import Question
 class QuestionService():
     
     def create(self, user: CustomUser, title:str, question: str, mode: str, tags: List[str]):
+        if not tags:
+            raise EmptyTagException(ErrorMsg.EMPTY_TAG)
         tags_object = []
         
         for tag_name in tags:

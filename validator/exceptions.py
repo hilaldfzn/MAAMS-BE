@@ -9,3 +9,6 @@ class ForbiddenRequestException(APIException):
 
 class InvalidTimeRangeRequestException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
+
+class EmptyTagException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
