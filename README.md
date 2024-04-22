@@ -73,6 +73,7 @@
     DB_NAME=<your local DB name>
 
     OPENAI_API_KEY=<your openAI API token>
+    SENTRY_DSN=<your sentry dsn>
     ```
 
 5. Initialize database tables

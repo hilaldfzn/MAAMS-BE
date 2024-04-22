@@ -21,6 +21,8 @@ from drf_spectacular.views import (
     SpectacularAPIView, SpectacularSwaggerView
 )
 
+from .views import TriggerError
+
 urlpatterns = [
     # apps
     path('admin/', admin.site.urls),
@@ -30,4 +32,6 @@ urlpatterns = [
     # utilities
     path('api/v1/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/v1/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    # removed when sentry has been tested at staging
+    path('api/v1/sentry/', TriggerError.as_view(), name="trigger-error")
 ]
