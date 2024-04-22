@@ -205,8 +205,12 @@ class QuestionPatch(ViewSet):
         responses=QuestionResponse,
     )
     def patch_title(self, request, pk):
-        return Response("")
-
+        request_serializer = QuestionTitleRequest(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        question = QuestionService.update_title(self, user=request.user, pk=pk, **request_serializer.validated_data)
+        response_serializer = QuestionResponse(question)
+        
+        return Response(response_serializer.data)
     
 @permission_classes([IsAuthenticated])
 class QuestionDelete(APIView):

@@ -187,6 +187,31 @@ class QuestionService():
             mode = question_object.mode,
             tags=tags
         )
+    
+    def update_title(self, user:CustomUser, title:str, pk:uuid):
+        try:
+            question_object = Question.objects.get(pk=pk)
+        except ObjectDoesNotExist:
+            raise NotFoundRequestException(ErrorMsg.NOT_FOUND)
+        
+        user_id = question_object.user.uuid
+
+        if user.uuid != user_id:
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_UPDATE)
+        
+        question_object.title = title
+        question_object.save()
+        
+        tags = [tag.name for tag in question_object.tags.all()]
+        return CreateQuestionDataClass(
+            username = question_object.user.username,
+            id = question_object.id,
+            title=question_object.title,
+            question = question_object.question,
+            created_at = question_object.created_at,
+            mode = question_object.mode,
+            tags=tags
+        )
         
     def delete(self, user:CustomUser, pk:uuid):
         try:
