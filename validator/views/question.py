@@ -12,7 +12,7 @@ from utils.pagination import CustomPageNumberPagination
 
 from validator.services.question import QuestionService
 from validator.serializers import (
-    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse
+    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse, QuestionTitleRequest
 )
 
 
@@ -185,19 +185,28 @@ class QuestionGet(ViewSet):
         return paginator.get_paginated_response(page)
 
 @permission_classes([IsAuthenticated])
-class QuestionPut(APIView):
+class QuestionPatch(ViewSet):
     @extend_schema(
-        description='Request and Response data for updating a question',
+        description='Request and Response data for updating question mode',
         request=BaseQuestion,
         responses=QuestionResponse,
     )
-    def put(self, request, pk):
+    def patch_mode(self, request, pk):
         request_serializer = BaseQuestion(data=request.data)
         request_serializer.is_valid(raise_exception=True)
         question = QuestionService.update_mode(self, user=request.user, pk=pk, **request_serializer.validated_data)
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data)
+    
+    @extend_schema(
+        description='Request and Response data for updating question title',
+        request=QuestionTitleRequest,
+        responses=QuestionResponse,
+    )
+    def patch_title(self, request, pk):
+        return Response("")
+
     
 @permission_classes([IsAuthenticated])
 class QuestionDelete(APIView):
