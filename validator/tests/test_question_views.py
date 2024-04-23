@@ -165,7 +165,7 @@ class QuestionViewTest(APITestCase):
             content_type=self.content_type_login,
         )
         
-        access_token = response_login.data['access_token']  # Extracting access token from login response
+        access_token = response_login.data['access_token']
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
         
