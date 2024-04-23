@@ -121,7 +121,7 @@ class QuestionService():
         today_datetime = datetime.now()
         last_week_datetime = today_datetime - timedelta(days=7)
 
-        clause = self._resolve_filter_type(filter, keyword, user)
+        clause = self._resolve_filter_type(filter, keyword)
 
         time = self._resolve_time_range(time_range.lower(), today_datetime, last_week_datetime)
         
@@ -146,7 +146,7 @@ class QuestionService():
         # append corresponding user to query
         user_filter = Q(user=user)
 
-        clause = self._resolve_filter_type(filter, keyword, user)
+        clause = self._resolve_filter_type(filter, keyword)
 
         time = self._resolve_time_range(time_range.lower(), today_datetime, last_week_datetime)
 
@@ -232,7 +232,7 @@ class QuestionService():
             
         return response
     
-    def _resolve_filter_type(self, filter: str, keyword: str, user: CustomUser) -> Q:
+    def _resolve_filter_type(self, filter: str, keyword: str) -> Q:
         """
         Returns where clause for questions with specified filters/keywords.
         Only allow superusers/admin to filter by user.

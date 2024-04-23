@@ -134,11 +134,11 @@ class QuestionGet(ViewSet):
     )
     def get_privileged(self, request):
         # query param to determine time range or response
-        filter = request.query_params.get('filter')
+        q_filter = request.query_params.get('filter')
         time_range = request.query_params.get('time_range') 
         keyword =  request.query_params.get('keyword', '')
 
-        questions = self.service_class.get_privileged(filter=filter, 
+        questions = self.service_class.get_privileged(filter=q_filter, 
                                                       user=request.user, 
                                                       time_range=time_range, 
                                                       keyword=keyword)
@@ -187,11 +187,11 @@ class QuestionGet(ViewSet):
     )
     def get_matched(self, request):
         # query param to determine question mode, time range, or response
-        filter = request.query_params.get('filter', 'semua')
+        q_filter = request.query_params.get('filter', 'semua')
         time_range = request.query_params.get('time_range') 
         keyword = request.query_params.get('keyword', '') 
 
-        questions = self.service_class.get_matched(filter=filter,
+        questions = self.service_class.get_matched(filter=q_filter,
                                                    user=request.user, 
                                                    time_range=time_range, 
                                                    keyword=keyword)
