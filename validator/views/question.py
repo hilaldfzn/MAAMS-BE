@@ -86,7 +86,6 @@ class QuestionGet(ViewSet):
         ]
     )
     def get_all(self, request):
-        # query param to determine time range or response
         time_range = request.query_params.get('time_range') 
         questions = self.service_class.get_all(user=request.user, time_range=time_range)
         serializer = QuestionResponse(questions, many=True)
@@ -127,7 +126,6 @@ class QuestionGet(ViewSet):
         ]
     )
     def get_privileged(self, request):
-        # query param to determine time range or response
         time_range = request.query_params.get('time_range') 
         keyword =  request.query_params.get('keyword', '')
 
@@ -170,7 +168,6 @@ class QuestionGet(ViewSet):
         ]
     )
     def get_matched(self, request):
-        # query param to determine time range or response
         time_range = request.query_params.get('time_range') 
         keyword = request.query_params.get('keyword', '') 
 

@@ -404,7 +404,6 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.data['count'], len(questions))
 
     def test_get_pengawasan_older(self):
-        # reset questions
         Question.objects.all().delete()
 
         url = reverse(self.get_pengawasan)
@@ -515,7 +514,6 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.data['detail'], "Invalid time range format.")
 
     def test_get_matched_unauthorized_access(self):
-        # Remove authentication
         self.client.credentials()
         url = reverse(self.get_matched)
         response = self.client.get(url + '?keyword=test&time_range=last_week')
