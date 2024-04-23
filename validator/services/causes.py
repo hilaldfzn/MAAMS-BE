@@ -1,3 +1,4 @@
+from typing import List
 import openai
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -85,9 +86,34 @@ class CausesService:
             cause=cause.cause,
             status=cause.status
         )
-        
 
-    def update(self, user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
+    def get_list(self, user: CustomUser, question_id: uuid) -> List[CreateCauseDataClass]:
+        try:
+            cause = Causes.objects.filter(problem_id=question_id)
+            cause_user_uuid = question.Question.objects.get(pk=question_id).user.uuid
+        except ObjectDoesNotExist:
+            raise NotFoundRequestException(ErrorMsg.CAUSE_NOT_FOUND)
+        
+        if user.uuid != cause_user_uuid and cause[0].mode == Causes.ModeChoices.PRIBADI:
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
+        
+        if cause[0].mode == Causes.ModeChoices.PENGAWASAN and not user.is_staff and user.uuid != cause_user_uuid:
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
+        
+        return [
+            CreateCauseDataClass(
+                question_id=question_id,
+                id=cause.id,
+                row=cause.row,
+                column=cause.column,
+                mode=cause.mode,
+                cause=cause.cause,
+                status=cause.status
+            )
+            for cause in cause
+        ]
+
+    def patch(self, user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
         try:
             causes = Causes.objects.get(problem_id = question_id, pk=pk)
             causes.cause = cause

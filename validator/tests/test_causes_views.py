@@ -101,7 +101,7 @@ class CausesViewTest(APITestCase):
     
         self.post_url = 'validator:create_causes'
         self.get_url = 'validator:get_causes'
-        self.put_url = 'validator:put_causes'
+        self.patch_url = 'validator:patch_causes'
         self.validate_url = 'validator:validate_causes'
         self.get_list_url = 'validator:get_causes_list'
 
@@ -157,43 +157,48 @@ class CausesViewTest(APITestCase):
         url = reverse(self.get_list_url, kwargs={'question_id': nonexistent_question_uuid})
         response = self.client.get(url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_causes_list_forbidden(self):
+        url = reverse(self.get_list_url, kwargs={'question_id': self.question_uuid2})
+        response = self.client.get(url)
+                
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
-    def test_put_cause_positive(self):
+    def test_patch_cause_positive(self):
         self.valid_data = {'question_id': str(self.question_uuid1), 'id':self.causes_uuid, 'row': 2, 'column': 2, 'mode': Causes.ModeChoices.PRIBADI, 'cause': 'Updated Cause'}
 
-        url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid1), 'pk': str(self.causes_uuid)})
+        url = reverse(self.patch_url, kwargs={'question_id': str(self.question_uuid1), 'pk': str(self.causes_uuid)})
         data = {'question_id': self.question_uuid1, 'id':self.causes_uuid, 'cause': 'Updated Cause'}
-        response = self.client.put(url, data, format='json')
+        response = self.client.patch(url, data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_put_cause_forbidden(self):
+    def test_patch_cause_forbidden(self):
         self.valid_data = {'question_id': str(self.question_uuid2), 'id':self.causes_uuid2, 'row': 2, 'column': 2, 'mode': Causes.ModeChoices.PENGAWASAN, 'cause': 'Updated Cause'}
 
-        url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid2), 'pk': str(self.causes_uuid2)})
+        url = reverse(self.patch_url, kwargs={'question_id': str(self.question_uuid2), 'pk': str(self.causes_uuid2)})
         data = {'question_id': self.question_uuid2, 'id':self.causes_uuid2, 'cause': 'Updated Cause'}
-        response = self.client.put(url, data, format='json')
+        response = self.client.patch(url, data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_put_cause_invalid_data(self):
-        url = reverse(self.put_url, kwargs={'question_id': str(self.question_uuid1), 'pk': self.causes_uuid})
-        self.invalid_data_put = {'problem': self.question_uuid1, 'row': 1, 'column': 1, 'mode': ''}
-        response = self.client.put(url, self.invalid_data_put, format='json')
+    def test_patch_cause_invalid_data(self):
+        url = reverse(self.patch_url, kwargs={'question_id': str(self.question_uuid1), 'pk': self.causes_uuid})
+        self.invalid_data_patch = {'problem': self.question_uuid1, 'row': 1, 'column': 1, 'mode': ''}
+        response = self.client.patch(url, self.invalid_data_patch, format='json')
         
-        serializer = BaseCauses(data=self.invalid_data_put)
+        serializer = BaseCauses(data=self.invalid_data_patch)
         
         self.assertFalse(serializer.is_valid())
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-    def test_put_cause_missing_data(self):
+    def test_patch_cause_missing_data(self):
         non_existing_pk = uuid.uuid4()
-        url = reverse(self.put_url, kwargs={'question_id': str(non_existing_pk), 'pk': str(non_existing_pk)})
-        self.invalid_data_put = {'cause': 'Updated cause'}
-        response = self.client.put(url, self.invalid_data_put, format='json')
+        url = reverse(self.patch_url, kwargs={'question_id': str(non_existing_pk), 'pk': str(non_existing_pk)})
+        self.invalid_data_patch = {'cause': 'Updated cause'}
+        response = self.client.patch(url, self.invalid_data_patch, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 

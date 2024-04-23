@@ -4,7 +4,7 @@ from validator.views.question import (
     QuestionGet, QuestionPost, QuestionPut, QuestionDelete
 ) 
 from validator.views.causes import (
-    CausesGet, CausesPost, CausesPut, ValidateView
+    CausesGet, CausesPost, CausesPatch, ValidateView
 )
 
 
@@ -19,10 +19,11 @@ urlpatterns = [
     path('pengawasan/', QuestionGet.as_view({ 'get': 'get_privileged' }), name="get_question_list_pengawasan"),
     path('baru/', QuestionPost.as_view(), name="create_question"),
     path('ubah/<uuid:pk>/', QuestionPut.as_view(), name="put_question"),
-    # causes
     path('hapus/<uuid:pk>/', QuestionDelete.as_view(), name="delete_question"),
+    # causes
     path('causes/', CausesPost.as_view(), name="create_causes"),
-    path('causes/<uuid:question_id>/<uuid:pk>', CausesGet.as_view(), name="get_causes"),
-    path('causes/update/<uuid:question_id>/<uuid:pk>/', CausesPut.as_view(), name="put_causes"),
+    path('causes/<uuid:question_id>/', CausesGet.as_view({ 'get': 'get_list' }), name="get_causes_list"),
+    path('causes/<uuid:question_id>/<uuid:pk>', CausesGet.as_view({ 'get': 'get' }), name="get_causes"),
+    path('causes/patch/<uuid:question_id>/<uuid:pk>/', CausesPatch.as_view(), name="patch_causes"),
     path('causes/validate/<uuid:question_id>/', ValidateView.as_view(), name="validate_causes"),
 ]
