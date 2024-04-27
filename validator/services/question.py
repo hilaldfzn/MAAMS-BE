@@ -116,6 +116,7 @@ class QuestionService():
         if not user.is_superuser or not user.is_staff:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
+        if not filter: filter = 'semua'
         if not keyword: keyword = ''
             
         today_datetime = datetime.now()
@@ -138,6 +139,7 @@ class QuestionService():
         """
         Returns a list of matched questions corresponding to logged in user with specified filters.
         """
+        if not filter: filter = 'semua'
         if not keyword: keyword = ''
 
         today_datetime = datetime.now()
