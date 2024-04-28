@@ -13,6 +13,11 @@ class BaseQuestion(serializers.Serializer):
         
     mode = serializers.ChoiceField(choices=MODE_CHOICES)
     
+class QuestionTitleRequest(serializers.Serializer):
+    class Meta:
+        ref_name = 'QuestionTitleRequest'
+        
+    title = serializers.CharField(max_length=40)
 
 class QuestionRequest(BaseQuestion):
     class Meta:

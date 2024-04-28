@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-# import sentry_sdk
+import sentry_sdk
 
 # Setup environment variables.
 # Production & staging environment variables will be stored on Dockerfile
@@ -31,7 +31,7 @@ if env_file:
 active_env = str(os.environ["ENVIRONMENT"])
 # If a new environment is added,
 # check here to load .env file if file is present.
-if active_env == 'DEVELOPMENT':
+if active_env == 'DEVELOPMENT' or active_env == 'LOCAL':
     load_dotenv('./.env.dev')
 elif active_env == 'TESTING':
     load_dotenv('./.env.test')
@@ -240,3 +240,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 OPENAI_API_KEY = get_env_value("OPENAI_API_KEY")
 
+# Sentry
+if active_env == "DEVELOPMENT":
+    sentry_sdk.init(
+        dsn=get_env_value("SENTRY_DSN"),
+        traces_sample_rate=1.0,
+    )

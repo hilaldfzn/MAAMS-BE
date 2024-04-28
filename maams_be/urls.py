@@ -30,5 +30,4 @@ urlpatterns = [
     # utilities
     path('api/v1/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/v1/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    # removed when sentry has been tested at staging
 ]

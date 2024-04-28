@@ -167,28 +167,27 @@ class QuestionService():
 
         return response
 
-    def update_mode(self, user:CustomUser, mode:str, pk:uuid):
+    def update_question(self, user: CustomUser, pk: uuid, **fields):
         try:
-            question_object = Question.objects.get(pk=pk)
-        except ObjectDoesNotExist:
+            question = Question.objects.get(pk=pk)
+        except Question.DoesNotExist:
             raise NotFoundRequestException(ErrorMsg.NOT_FOUND)
         
-        user_id = question_object.user.uuid
-
-        if user.uuid != user_id:
+        if user.uuid != question.user.uuid:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_UPDATE)
         
-        question_object.mode = mode
-        question_object.save()
-        
-        tags = [tag.name for tag in question_object.tags.all()]
+        for field, value in fields.items():
+            setattr(question, field, value)
+        question.save()
+
+        tags = [tag.name for tag in question.tags.all()]
         return CreateQuestionDataClass(
-            username = question_object.user.username,
-            id = question_object.id,
-            title=question_object.title,
-            question = question_object.question,
-            created_at = question_object.created_at,
-            mode = question_object.mode,
+            username=question.user.username,
+            id=question.id,
+            title=question.title,
+            question=question.question,
+            created_at=question.created_at,
+            mode=question.mode,
             tags=tags
         )
         
