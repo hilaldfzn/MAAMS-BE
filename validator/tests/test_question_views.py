@@ -18,6 +18,7 @@ from validator.serializers import (
 )
 
 from django.core.exceptions import ObjectDoesNotExist
+from validator.constants import ErrorMsg
 
 class QuestionViewTest(APITestCase):
     def setUp(self):
@@ -83,11 +84,13 @@ class QuestionViewTest(APITestCase):
         self.invalid_data_patch_mode = {'id': self.question_uuid, 'mode': 'invalid'}
         self.invalid_data_patch_mode_missing = {'id': self.question_uuid, 'mode': ''}
         self.invalid_data_patch_mode_user = {'id': self.question_uuid2, 'mode': Question.ModeChoices.PENGAWASAN}
+        self.invalid_data_patch_mode_same = {'id': self.question_uuid, 'mode': Question.ModeChoices.PRIBADI}
         
         # invalid data for patch mode
         self.invalid_data_patch_title = {'id': self.question_uuid, 'title': 'This title has more than 40 characters in it'}
-        self.invalid_data_patch_title_missing = {'id': self.question_uuid, 'mode': ''}
-        self.invalid_data_patch_title_user = {'id': self.question_uuid2, 'mode': Question.ModeChoices.PENGAWASAN}
+        self.invalid_data_patch_title_missing = {'id': self.question_uuid, 'title': ''}
+        self.invalid_data_patch_title_user = {'id': self.question_uuid2, 'title': 'something'}
+        self.invalid_data_patch_title_same = {'id': self.question_uuid, 'title': 'pertanyaan 1'}
         
         # urls
         self.post_url = 'validator:create_question'
@@ -264,6 +267,13 @@ class QuestionViewTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(updated_question.mode, Question.ModeChoices.PENGAWASAN)
+            
+    def test_patch_mode_same_value(self):
+        url = reverse(self.patch_mode_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.invalid_data_patch_mode_same, format='json')
+        
+        self.assertEqual(response.data['detail'], ErrorMsg.VALUE_NOT_UPDATED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_patch_mode_question_invalid_value(self):
         url = reverse(self.patch_mode_url, kwargs={'pk': self.question_uuid})
@@ -305,6 +315,13 @@ class QuestionViewTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(updated_question.title, 'judul baru')
+    
+    def test_patch_title_same_value(self):
+        url = reverse(self.patch_title_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.invalid_data_patch_title_same, format='json')
+        
+        self.assertEqual(response.data['detail'], ErrorMsg.VALUE_NOT_UPDATED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_patch_title_question_invalid_value(self):
         url = reverse(self.patch_title_url, kwargs={'pk': self.question_uuid})

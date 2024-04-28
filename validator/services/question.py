@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 from typing import List
 import uuid
 from datetime import (
@@ -13,7 +12,7 @@ from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 from validator.enums import QuestionType
 from validator.exceptions import (
-    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException, InvalidTagException
+    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException, InvalidTagException, ValueNotUpdatedException
 )
 from validator.models.causes import Causes
 from validator.models.question import Question
@@ -176,9 +175,16 @@ class QuestionService():
         if user.uuid != question.user.uuid:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_UPDATE)
         
-        for field, value in fields.items():
-            setattr(question, field, value)
+        updated = False
+        
+        for field, new_value in fields.items():
+            if getattr(question, field) != new_value:
+                setattr(question, field, new_value)
+                updated = True
         question.save()
+            
+        if not updated:
+            raise ValueNotUpdatedException(ErrorMsg.VALUE_NOT_UPDATED)
 
         tags = [tag.name for tag in question.tags.all()]
         return CreateQuestionDataClass(

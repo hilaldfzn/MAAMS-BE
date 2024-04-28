@@ -8,3 +8,4 @@ class ErrorMsg:
     EMPTY_TAG = "Berikan minimal 1 kategori."
     TOO_MANY_TAG = 'Kategori terlalu banyak. Berikan maksimal 3.'
     TAG_NAME_TOO_LONG = 'Kategori maksimal 10 karakter.'
+    VALUE_NOT_UPDATED = "Tidak boleh sama dengan yang sebelumnya"
