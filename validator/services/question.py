@@ -132,7 +132,7 @@ class QuestionService():
         
         # query the questions with specified filters     
         mode = Q(mode=QuestionType.PENGAWASAN.value)       
-        questions = Question.objects.filter(mode & clause & time).order_by('-created_at')
+        questions = Question.objects.filter(mode & clause & time).order_by('-created_at').distinct()
 
         # get all questions matching corresponding filters
         response = self._make_question_response(questions)
@@ -157,7 +157,7 @@ class QuestionService():
         time = self._resolve_time_range(time_range.lower(), today_datetime, last_week_datetime)
 
         # query the questions with specified filters            
-        questions = Question.objects.filter(user_filter & clause & time).order_by('-created_at')
+        questions = Question.objects.filter(user_filter & clause & time).order_by('-created_at').distinct()
 
         # get all questions matching corresponding filters
         response = self._make_question_response(questions)
