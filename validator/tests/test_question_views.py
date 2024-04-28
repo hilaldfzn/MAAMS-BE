@@ -9,6 +9,7 @@ from rest_framework.test import APITestCase
 
 from authentication.models import CustomUser
 from validator.enums import QuestionType
+from validator.exceptions import InvalidTagException
 from validator.models.question import Question
 from validator.models.causes import Causes
 from validator.models.tag import Tag
@@ -49,10 +50,10 @@ class QuestionViewTest(APITestCase):
         
         # valid data
         self.valid_data = {
-            'title': 'Question 1',
+            'title': 'test',
             'question': 'Test question', 
-            'mode': Question.ModeChoices.PRIBADI,
-            'tags': ['economy', 'analysis']
+            'mode': 'PRIBADI',
+            'tags': ['analisis', 'pribadi']
         }
         self.valid_data_patch_mode = {'id': self.question_uuid, 'mode': Question.ModeChoices.PENGAWASAN}
         self.valid_data_patch_title = {'id': self.question_uuid, 'title': 'judul baru'}
@@ -65,6 +66,18 @@ class QuestionViewTest(APITestCase):
             'question': 'Test question empty tags', 
             'mode': 'PRIBADI',
             'tags': []
+        }
+        self.invalid_data_too_many_tags = {
+            'title': 'test',
+            'question': 'Test question too many tags', 
+            'mode': 'PRIBADI',
+            'tags': ['analisis', 'pribadi', 'sosial', 'politik']
+        }
+        self.invalid_data_too_long_tag = {
+            'title': 'test',
+            'question': 'Test question too long tags', 
+            'mode': 'PRIBADI',
+            'tags': ['analisisiiiiiiiiiiiiiiiis']
         }
 
         # invalid data for patch mode
@@ -226,6 +239,16 @@ class QuestionViewTest(APITestCase):
         url = reverse(self.post_url)
         response = self.client.post(url, self.invalid_data_empty_tags, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_too_long_tags(self):
+        url = reverse(self.post_url)
+        response = self.client.post(url, self.invalid_data_too_many_tags, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_too_many_tags(self):
+        url = reverse(self.post_url)
+        response = self.client.post(url, self.invalid_data_too_long_tag, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_post_question_invalid_value(self):
         url = reverse(self.post_url)
@@ -385,7 +408,6 @@ class QuestionViewTest(APITestCase):
     def test_get_recent_question(self):
         Question.objects.all().delete()
         url_post = reverse(self.post_url)
-        
         response__old_post = self.client.post(url_post, self.valid_data, format='json')
         old_post_id = Question.objects.get(id=response__old_post.data['id']).id
         

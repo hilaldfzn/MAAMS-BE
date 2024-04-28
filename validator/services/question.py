@@ -12,7 +12,7 @@ from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 from validator.enums import QuestionType
 from validator.exceptions import (
-    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException, EmptyTagException, ValueNotUpdatedException
+    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException, InvalidTagException, ValueNotUpdatedException
 )
 from validator.models.causes import Causes
 from validator.models.question import Question
@@ -24,10 +24,14 @@ class QuestionService():
     
     def create(self, user: CustomUser, title:str, question: str, mode: str, tags: List[str]):
         if not tags:
-            raise EmptyTagException(ErrorMsg.EMPTY_TAG)
+            raise InvalidTagException(ErrorMsg.EMPTY_TAG)
+        if len(tags) > 3:
+            raise InvalidTagException(ErrorMsg.TOO_MANY_TAG)
         tags_object = []
         
         for tag_name in tags:
+            if len(tag_name) > 10:
+                raise InvalidTagException(ErrorMsg.TAG_NAME_TOO_LONG)
             try:
                 tag = Tag.objects.get(name=tag_name)
             except Tag.DoesNotExist:
