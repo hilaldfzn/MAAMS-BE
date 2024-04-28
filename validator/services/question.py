@@ -112,7 +112,7 @@ class QuestionService():
 
         return response
     
-    def get_privileged(self, filter: str, user: CustomUser, time_range: str, keyword: str):
+    def get_privileged(self, filter: str, user: CustomUser, keyword: str):
         """
         Return a list for pengawasan questions by keyword and time range for privileged users.
         """
@@ -122,17 +122,12 @@ class QuestionService():
         
         if not filter: filter = 'semua'
         if not keyword: keyword = ''
-            
-        today_datetime = datetime.now()
-        last_week_datetime = today_datetime - timedelta(days=7)
 
         clause = self._resolve_filter_type(filter, keyword)
-
-        time = self._resolve_time_range(time_range.lower(), today_datetime, last_week_datetime)
         
         # query the questions with specified filters     
         mode = Q(mode=QuestionType.PENGAWASAN.value)       
-        questions = Question.objects.filter(mode & clause & time).order_by('-created_at')
+        questions = Question.objects.filter(mode & clause ).order_by('-created_at').distinct()
 
         # get all questions matching corresponding filters
         response = self._make_question_response(questions)
