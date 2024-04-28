@@ -26,6 +26,6 @@ urlpatterns = [
     path('causes/', CausesPost.as_view(), name="create_causes"),
     path('causes/<uuid:question_id>/', CausesGet.as_view({ 'get': 'get_list' }), name="get_causes_list"),
     path('causes/<uuid:question_id>/<uuid:pk>', CausesGet.as_view({ 'get': 'get' }), name="get_causes"),
-    path('causes/patch/<uuid:question_id>/<uuid:pk>/', CausesPatch.as_view(), name="patch_causes"),
+    path('causes/patch/<uuid:question_id>/<uuid:pk>/', CausesPatch.as_view({'patch': 'patch_cause'}), name="patch_causes"),
     path('causes/validate/<uuid:question_id>/', ValidateView.as_view(), name="validate_causes"),
 ]

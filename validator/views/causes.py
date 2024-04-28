@@ -46,13 +46,13 @@ class CausesGet(ViewSet):
         return Response(serializer.data)
 
 @permission_classes([IsAuthenticated])
-class CausesPatch(APIView):
+class CausesPatch(ViewSet):
     @extend_schema(
         description='Request and Response data for updating a cause',
         request=BaseCauses,
         responses=CausesResponse,
     )
-    def patch(self, request, question_id, pk):
+    def patch_cause(self, request, question_id, pk):
         request_serializer = BaseCauses(data=request.data)
         request_serializer.is_valid(raise_exception=True)
         cause = CausesService.patch_cause(self=CausesService, user=request.user, question_id=question_id, pk=pk, **request_serializer.validated_data)
