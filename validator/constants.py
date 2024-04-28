@@ -6,3 +6,4 @@ class ErrorMsg:
     FORBIDDEN_DELETE = "Pengguna tidak diizinkan untuk menghapus analisis ini."
     INVALID_TIME_RANGE = 'Invalid time range format.'
     EMPTY_TAG = "At least one tag must be provided."
+    VALUE_NOT_UPDATED = "Tidak boleh sama dengan yang sebelumnya"
