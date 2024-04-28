@@ -15,8 +15,8 @@ from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 from validator.exceptions import (
     NotFoundRequestException, ForbiddenRequestException, 
-    InvalidTimeRangeRequestException, EmptyTagException,
-    InvalidFiltersException
+    InvalidTimeRangeRequestException, InvalidTagException,
+    InvalidFiltersException, ValueNotUpdatedException
 )
 from validator.models.causes import Causes
 from validator.models.question import Question
@@ -28,10 +28,14 @@ class QuestionService():
     
     def create(self, user: CustomUser, title:str, question: str, mode: str, tags: List[str]):
         if not tags:
-            raise EmptyTagException(ErrorMsg.EMPTY_TAG)
+            raise InvalidTagException(ErrorMsg.EMPTY_TAG)
+        if len(tags) > 3:
+            raise InvalidTagException(ErrorMsg.TOO_MANY_TAG)
         tags_object = []
         
         for tag_name in tags:
+            if len(tag_name) > 10:
+                raise InvalidTagException(ErrorMsg.TAG_NAME_TOO_LONG)
             try:
                 tag = Tag.objects.get(name=tag_name)
             except Tag.DoesNotExist:
@@ -160,28 +164,34 @@ class QuestionService():
 
         return response
 
-    def update_mode(self, user:CustomUser, mode:str, pk:uuid):
+    def update_question(self, user: CustomUser, pk: uuid, **fields):
         try:
-            question_object = Question.objects.get(pk=pk)
-        except ObjectDoesNotExist:
+            question = Question.objects.get(pk=pk)
+        except Question.DoesNotExist:
             raise NotFoundRequestException(ErrorMsg.NOT_FOUND)
         
-        user_id = question_object.user.uuid
-
-        if user.uuid != user_id:
+        if user.uuid != question.user.uuid:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_UPDATE)
         
-        question_object.mode = mode
-        question_object.save()
+        updated = False
         
-        tags = [tag.name for tag in question_object.tags.all()]
+        for field, new_value in fields.items():
+            if getattr(question, field) != new_value:
+                setattr(question, field, new_value)
+                updated = True
+        question.save()
+            
+        if not updated:
+            raise ValueNotUpdatedException(ErrorMsg.VALUE_NOT_UPDATED)
+
+        tags = [tag.name for tag in question.tags.all()]
         return CreateQuestionDataClass(
-            username = question_object.user.username,
-            id = question_object.id,
-            title=question_object.title,
-            question = question_object.question,
-            created_at = question_object.created_at,
-            mode = question_object.mode,
+            username=question.user.username,
+            id=question.id,
+            title=question.title,
+            question=question.question,
+            created_at=question.created_at,
+            mode=question.mode,
             tags=tags
         )
         

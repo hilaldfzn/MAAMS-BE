@@ -2,17 +2,16 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from rest_framework.views import APIView
-from rest_framework.decorators import permission_classes, action
+from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-from drf_spectacular.utils import extend_schema
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from utils.pagination import CustomPageNumberPagination
 
 from validator.services.question import QuestionService
 from validator.serializers import (
-    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse
+    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse, QuestionTitleRequest
 )
 
 
@@ -86,7 +85,6 @@ class QuestionGet(ViewSet):
         ]
     )
     def get_all(self, request):
-        # query param to determine time range or response
         time_range = request.query_params.get('time_range') 
         questions = self.service_class.get_all(user=request.user, time_range=time_range)
         serializer = QuestionResponse(questions, many=True)
@@ -203,16 +201,29 @@ class QuestionGet(ViewSet):
         return paginator.get_paginated_response(page)
 
 @permission_classes([IsAuthenticated])
-class QuestionPut(APIView):
+class QuestionPatch(ViewSet):
     @extend_schema(
-        description='Request and Response data for updating a question',
+        description='Request and Response data for updating question mode',
         request=BaseQuestion,
         responses=QuestionResponse,
     )
-    def put(self, request, pk):
+    def patch_mode(self, request, pk):
         request_serializer = BaseQuestion(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        question = QuestionService.update_mode(self, user=request.user, pk=pk, **request_serializer.validated_data)
+        question = QuestionService.update_question(self, user=request.user, pk=pk, mode=request_serializer.validated_data.get('mode'))
+        response_serializer = QuestionResponse(question)
+        
+        return Response(response_serializer.data)
+    
+    @extend_schema(
+        description='Request and Response data for updating question title',
+        request=QuestionTitleRequest,
+        responses=QuestionResponse,
+    )
+    def patch_title(self, request, pk):
+        request_serializer = QuestionTitleRequest(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        question = QuestionService.update_question(self, user=request.user, pk=pk, title=request_serializer.validated_data.get('title'))
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data)

@@ -18,9 +18,12 @@ class EmptyTagException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
 
-class EmptyTagException(APIException):
+class InvalidTagException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
 
 class InvalidFiltersException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    
+class ValueNotUpdatedException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST

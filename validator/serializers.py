@@ -1,5 +1,6 @@
 from rest_framework import serializers
-
+from validator.constants import ErrorMsg
+from validator.exceptions import InvalidTagException
 from validator.models.causes import Causes
 from validator.models.question import Question
 
@@ -12,12 +13,17 @@ class BaseQuestion(serializers.Serializer):
         
     mode = serializers.ChoiceField(choices=MODE_CHOICES)
     
+class QuestionTitleRequest(serializers.Serializer):
+    class Meta:
+        ref_name = 'QuestionTitleRequest'
+        
+    title = serializers.CharField(max_length=40)
 
 class QuestionRequest(BaseQuestion):
     class Meta:
         ref_name = 'QuestionRequest'
 
-    title = serializers.CharField()
+    title = serializers.CharField(max_length=40)
     question = serializers.CharField()
     tags = serializers.ListField(child=serializers.CharField())    
 
@@ -26,7 +32,7 @@ class QuestionResponse(BaseQuestion):
         ref_name = 'QuestionResponse'
     
     id = serializers.UUIDField()
-    title = serializers.CharField()
+    title = serializers.CharField(max_length=40)
     question = serializers.CharField()
     created_at = serializers.DateTimeField()
     username = serializers.CharField()
