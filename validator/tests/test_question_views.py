@@ -436,22 +436,66 @@ class QuestionViewTest(APITestCase):
         self.user1.save()
 
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?time_range=last_week')
+        response = self.client.get(url + '?filter=semua&keyword=&time_range=last_week')
         questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        print(json.dumps(response.data, indent=4))
+        print(q for q in questions)
         self.assertEqual(response.data['count'], len(questions))
 
     def test_get_pengawasan_older(self):
         Question.objects.all().delete()
 
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?time_range=older')
+        response = self.client.get(url + '?filter=semua&time_range=older')
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+    
+    def test_get_pengawasan_filter_by_pengguna(self):
+        # reset questions
+        Question.objects.all().delete()
+
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?filter=pengguna&keyword=test&time_range=older')
         questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], len(questions))
 
+    def test_get_pengawasan_filter_by_topik(self):
+        # reset questions
+        Question.objects.all().delete()
+
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?filter=topik&keyword=tag1&time_range=older')
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+
+    def test_get_pengawasan_filter_by_judul(self):
+        # reset questions
+        Question.objects.all().delete()
+
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?filter=judul&keyword=pertanyaan&time_range=older')
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+
+    def test_get_pengawasan_invalid_filter(self):
+        # reset questions
+        Question.objects.all().delete()
+
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?filter=invalid&keyword=pertanyaan&time_range=older')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
     def test_get_pengawasan_questions_forbidden(self):
         # reset user status
         self.user1.is_superuser = False
@@ -471,7 +515,7 @@ class QuestionViewTest(APITestCase):
         self.user1.save()
         
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?time_range=last_week')
+        response = self.client.get(url + '?filter=semua&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
@@ -479,7 +523,7 @@ class QuestionViewTest(APITestCase):
     
     def test_get_pengawasan_invalid_time_range(self):
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?keyword=test&time_range=invalid_format')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=invalid_format')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], "Invalid time range format.")
@@ -488,7 +532,7 @@ class QuestionViewTest(APITestCase):
         # Remove authentication
         self.client.credentials()
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?keyword=test&time_range=last_week')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
@@ -500,7 +544,7 @@ class QuestionViewTest(APITestCase):
         self.user1.save()
         
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?keyword=&time_range=last_week')
+        response = self.client.get(url + '?filter=semua&keyword=&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
@@ -514,7 +558,7 @@ class QuestionViewTest(APITestCase):
     def test_get_all_questions_last_week(self):
         Question.objects.all().delete()
         url = reverse(self.get_all)
-        response = self.client.get(url + '?time_range=last_week')
+        response = self.client.get(url + '?filter=semua&time_range=last_week')
         questions = Question.objects.filter(user=self.user1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -523,7 +567,7 @@ class QuestionViewTest(APITestCase):
     def test_get_all_questions_older(self):
         Question.objects.all().delete()
         url = reverse(self.get_all)
-        response = self.client.get(url + '?time_range=older')
+        response = self.client.get(url + '?filter=semua&time_range=older')
         questions = Question.objects.filter(user=self.user1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -531,7 +575,7 @@ class QuestionViewTest(APITestCase):
         
     def test_get_matched(self):
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?keyword=test&time_range=last_week')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
@@ -539,7 +583,7 @@ class QuestionViewTest(APITestCase):
 
     def test_get_matched_no_keyword(self):
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?time_range=last_week')
+        response = self.client.get(url + '?filter=semua&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
@@ -547,7 +591,7 @@ class QuestionViewTest(APITestCase):
 
     def test_get_matched_invalid_time_range(self):
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?keyword=test&time_range=invalid_format')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=invalid_format')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], "Invalid time range format.")
@@ -555,7 +599,7 @@ class QuestionViewTest(APITestCase):
     def test_get_matched_unauthorized_access(self):
         self.client.credentials()
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?keyword=test&time_range=last_week')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
@@ -570,7 +614,7 @@ class QuestionViewTest(APITestCase):
 
     def test_get_matched_older_questions(self):
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?keyword=test&time_range=older')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=older')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
