@@ -113,7 +113,7 @@ class CausesService:
             for cause in cause
         ]
 
-    def patch(self, user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
+    def patch_cause(self, user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
         try:
             causes = Causes.objects.get(problem_id = question_id, pk=pk)
             causes.cause = cause

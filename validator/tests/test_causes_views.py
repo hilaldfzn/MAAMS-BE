@@ -6,7 +6,7 @@ from validator.models.causes import Causes
 from validator.models.question import Question
 from validator.services.causes import CausesService
 from authentication.models import CustomUser
-from validator.serializers import CausesResponse, CausesRequest, BaseCauses
+from validator.serializers import BaseCauses
 import uuid
 import json
 

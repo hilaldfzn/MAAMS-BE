@@ -55,7 +55,7 @@ class CausesPatch(APIView):
     def patch(self, request, question_id, pk):
         request_serializer = BaseCauses(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        cause = CausesService.patch(self=CausesService, user=request.user, question_id=question_id, pk=pk, **request_serializer.validated_data)
+        cause = CausesService.patch_cause(self=CausesService, user=request.user, question_id=question_id, pk=pk, **request_serializer.validated_data)
         response_serializer = CausesResponse(cause)
 
         return Response(response_serializer.data)
