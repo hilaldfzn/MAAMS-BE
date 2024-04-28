@@ -1,7 +1,7 @@
 from django.urls import path
 
 from validator.views.question import (
-    QuestionGet, QuestionPost, QuestionPut, QuestionDelete
+    QuestionGet, QuestionPost, QuestionPatch, QuestionDelete
 ) 
 from validator.views.causes import (
     CausesGet, CausesPost, CausesPut, ValidateView
@@ -18,7 +18,8 @@ urlpatterns = [
     path('search/', QuestionGet.as_view({ 'get': 'get_matched' }), name="get_matched"),
     path('pengawasan/', QuestionGet.as_view({ 'get': 'get_privileged' }), name="get_question_list_pengawasan"),
     path('baru/', QuestionPost.as_view(), name="create_question"),
-    path('ubah/<uuid:pk>/', QuestionPut.as_view(), name="put_question"),
+    path('ubah/<uuid:pk>/', QuestionPatch.as_view({'patch': 'patch_mode'}), name="patch_mode_question"),
+    path('ubah/judul/<uuid:pk>/', QuestionPatch.as_view({'patch': 'patch_title'}), name="patch_title_question"),
     # causes
     path('hapus/<uuid:pk>/', QuestionDelete.as_view(), name="delete_question"),
     path('causes/', CausesPost.as_view(), name="create_causes"),
