@@ -71,6 +71,12 @@ class QuestionViewTest(APITestCase):
             'mode': 'PRIBADI',
             'tags': ['analisis', 'pribadi', 'sosial', 'politik']
         }
+        self.invalid_data_too_long_tag = {
+            'title': 'test',
+            'question': 'Test question too long tags', 
+            'mode': 'PRIBADI',
+            'tags': ['analisisiiiiiiiiiiiiiiiis']
+        }
 
         
         # invalid data for put
@@ -225,9 +231,14 @@ class QuestionViewTest(APITestCase):
         response = self.client.post(url, self.invalid_data_empty_tags, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_post_too_many_tags(self):
+    def test_post_too_long_tags(self):
         url = reverse(self.post_url)
         response = self.client.post(url, self.invalid_data_too_many_tags, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_too_many_tags(self):
+        url = reverse(self.post_url)
+        response = self.client.post(url, self.invalid_data_too_long_tag, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_post_question_invalid_value(self):

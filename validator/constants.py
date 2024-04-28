@@ -7,3 +7,4 @@ class ErrorMsg:
     INVALID_TIME_RANGE = 'Invalid time range format.'
     EMPTY_TAG = "Berikan minimal 1 kategori."
     TOO_MANY_TAG = 'Kategori terlalu banyak. Berikan maksimal 3.'
+    TAG_NAME_TOO_LONG = 'Kategori maksimal 10 karakter.'

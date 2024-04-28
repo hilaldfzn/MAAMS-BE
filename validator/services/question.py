@@ -31,6 +31,8 @@ class QuestionService():
         tags_object = []
         
         for tag_name in tags:
+            if len(tag_name) > 10:
+                raise InvalidTagException(ErrorMsg.TAG_NAME_TOO_LONG)
             try:
                 tag = Tag.objects.get(name=tag_name)
             except Tag.DoesNotExist:
