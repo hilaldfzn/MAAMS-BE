@@ -133,12 +133,10 @@ class QuestionGet(ViewSet):
     def get_privileged(self, request):
         # query param to determine time range or response
         q_filter = request.query_params.get('filter')
-        time_range = request.query_params.get('time_range') 
         keyword =  request.query_params.get('keyword', '')
 
         questions = self.service_class.get_privileged(filter=q_filter, 
                                                       user=request.user, 
-                                                      time_range=time_range, 
                                                       keyword=keyword)
         serializer = QuestionResponse(questions, many=True)
 
