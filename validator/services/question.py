@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 from typing import List
 import uuid
 from datetime import (
@@ -6,14 +5,18 @@ from datetime import (
 )
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from authentication.models import CustomUser
 
-from validator.enums import HistoryType
+from validator.enums import (
+    QuestionType, HistoryType, FilterType
+)
 from validator.constants import ErrorMsg
 from validator.dataclasses.create_question import CreateQuestionDataClass 
-from validator.enums import QuestionType
 from validator.exceptions import (
-    NotFoundRequestException, ForbiddenRequestException, InvalidTimeRangeRequestException, EmptyTagException
+    NotFoundRequestException, ForbiddenRequestException, 
+    InvalidTimeRangeRequestException, InvalidTagException,
+    InvalidFiltersException, ValueNotUpdatedException
 )
 from validator.models.causes import Causes
 from validator.models.question import Question
@@ -25,10 +28,14 @@ class QuestionService():
     
     def create(self, user: CustomUser, title:str, question: str, mode: str, tags: List[str]):
         if not tags:
-            raise EmptyTagException(ErrorMsg.EMPTY_TAG)
+            raise InvalidTagException(ErrorMsg.EMPTY_TAG)
+        if len(tags) > 3:
+            raise InvalidTagException(ErrorMsg.TOO_MANY_TAG)
         tags_object = []
         
         for tag_name in tags:
+            if len(tag_name) > 10:
+                raise InvalidTagException(ErrorMsg.TAG_NAME_TOO_LONG)
             try:
                 tag = Tag.objects.get(name=tag_name)
             except Tag.DoesNotExist:
@@ -68,7 +75,7 @@ class QuestionService():
         if question_object.mode == Question.ModeChoices.PENGAWASAN and not (user.is_staff or user.is_superuser or user.uuid == user_id):
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
-        response = self.make_question_response([question_object])
+        response = self._make_question_response([question_object])
 
         return response[0]
     
@@ -90,7 +97,7 @@ class QuestionService():
                                                     ).order_by('-created_at')
                 
         # get all questions filtered by user
-        response = self.make_question_response(questions)
+        response = self._make_question_response(questions)
 
         return response
     
@@ -98,14 +105,14 @@ class QuestionService():
         recent_question = Question.objects.filter(user=user).order_by('-created_at').first()
 
         if (recent_question):
-            response = self.make_question_response([recent_question])
+            response = self._make_question_response([recent_question])
             response = response[0]
         else:
             response = recent_question
 
         return response
     
-    def get_privileged(self, user: CustomUser, time_range: str, keyword: str):
+    def get_privileged(self, filter: str, user: CustomUser, keyword: str):
         """
         Return a list for pengawasan questions by keyword and time range for privileged users.
         """
@@ -113,53 +120,42 @@ class QuestionService():
         if not user.is_superuser or not user.is_staff:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
-        if not keyword:
-            keyword = ''
-            
-        today_datetime = datetime.now()
-        last_week_datetime = today_datetime - timedelta(days=7)
+        if not filter: filter = 'semua'
+        if not keyword: keyword = ''
+
+        clause = self._resolve_filter_type(filter, keyword)
         
-        # get all publicly available questions of mode "PENGAWASAN", depending on time range
-        match time_range:
-            case HistoryType.LAST_WEEK.value:
-                questions = Question.objects.filter(question__icontains=keyword,
-                                                    mode=QuestionType.PENGAWASAN.value,
-                                                    created_at__range=[last_week_datetime, today_datetime]
-                                                    ).order_by('-created_at')
-            case HistoryType.OLDER.value:
-                questions = Question.objects.filter(question__icontains=keyword,
-                                                    mode=QuestionType.PENGAWASAN.value,
-                                                    created_at__lt=last_week_datetime
-                                                    ).order_by('-created_at')
-            case _:
-                raise InvalidTimeRangeRequestException(ErrorMsg.INVALID_TIME_RANGE)    
-        response = self.make_question_response(questions)
+        # query the questions with specified filters     
+        mode = Q(mode=QuestionType.PENGAWASAN.value)       
+        questions = Question.objects.filter(mode & clause ).order_by('-created_at').distinct()
+
+        # get all questions matching corresponding filters
+        response = self._make_question_response(questions)
 
         return response
     
-    def get_matched(self, user: CustomUser, time_range: str, keyword: str):
+    def get_matched(self, filter: str, user: CustomUser, time_range: str, keyword: str):
         """
-        Returns a list of matched questions corresponding to a specified user.
+        Returns a list of matched questions corresponding to logged in user with specified filters.
         """
+        if not filter: filter = 'semua'
+        if not keyword: keyword = ''
 
         today_datetime = datetime.now()
         last_week_datetime = today_datetime - timedelta(days=7)
-        
-        # get all publicly available questions of mode "PENGAWASAN", depending on time range
-        if time_range == HistoryType.LAST_WEEK.value:
-            questions = Question.objects.filter(user=user, created_at__range=[last_week_datetime, today_datetime],
-                                                question__icontains=keyword,
-                                                ).order_by('-created_at')
-        elif time_range == HistoryType.OLDER.value:
-            questions = Question.objects.filter(user=user, created_at__lt=last_week_datetime,
-                                                question__icontains=keyword,
-                                                ).order_by('-created_at')
-        else:
-            raise InvalidTimeRangeRequestException(ErrorMsg.INVALID_TIME_RANGE)
-             
 
-        # get all questions filtered by user
-        response = self.make_question_response(questions)
+        # append corresponding user to query
+        user_filter = Q(user=user)
+
+        clause = self._resolve_filter_type(filter, keyword)
+
+        time = self._resolve_time_range(time_range.lower(), today_datetime, last_week_datetime)
+
+        # query the questions with specified filters            
+        questions = Question.objects.filter(user_filter & clause & time).order_by('-created_at').distinct()
+
+        # get all questions matching corresponding filters
+        response = self._make_question_response(questions)
 
         return response
 
@@ -172,9 +168,16 @@ class QuestionService():
         if user.uuid != question.user.uuid:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_UPDATE)
         
-        for field, value in fields.items():
-            setattr(question, field, value)
+        updated = False
+        
+        for field, new_value in fields.items():
+            if getattr(question, field) != new_value:
+                setattr(question, field, new_value)
+                updated = True
         question.save()
+            
+        if not updated:
+            raise ValueNotUpdatedException(ErrorMsg.VALUE_NOT_UPDATED)
 
         tags = [tag.name for tag in question.tags.all()]
         return CreateQuestionDataClass(
@@ -217,7 +220,7 @@ class QuestionService():
     """
     Utility functions.
     """
-    def make_question_response(self, questions) -> list:
+    def _make_question_response(self, questions) -> list:
         response = []
         if len(questions) == 0:
             return response
@@ -235,3 +238,39 @@ class QuestionService():
             response.append(item)
             
         return response
+    
+    def _resolve_filter_type(self, filter: str, keyword: str) -> Q:
+        """
+        Returns where clause for questions with specified filters/keywords.
+        Only allow superusers/admin to filter by user.
+        """
+        match filter.lower():
+            case FilterType.PENGGUNA.value:
+                clause = (Q(user__username__icontains=keyword) | 
+                          Q(user__first_name__icontains=keyword) | 
+                          Q(user__last_name__icontains=keyword))
+            case FilterType.JUDUL.value:
+                clause = Q(question__icontains=keyword)
+            case FilterType.TOPIK.value:
+                clause = Q(tags__name__icontains=keyword)
+            case FilterType.SEMUA.value:
+                clause = (Q(question__icontains=keyword) | 
+                          Q(tags__name__icontains=keyword))
+            case _:
+                raise InvalidFiltersException(ErrorMsg.INVALID_FILTERS)
+        
+        return clause
+    
+    def _resolve_time_range(self, time_range: str, today_datetime: datetime, last_week_datetime: datetime) -> Q:
+        """
+        Returns where clause for questions with specified time range.
+        """
+        match time_range.lower():
+            case HistoryType.LAST_WEEK.value:
+                time = Q(created_at__range=[last_week_datetime, today_datetime])
+            case HistoryType.OLDER.value:
+                time = Q(created_at__lt=last_week_datetime)
+            case _:
+                raise InvalidTimeRangeRequestException(ErrorMsg.INVALID_TIME_RANGE)
+        
+        return time

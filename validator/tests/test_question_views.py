@@ -9,6 +9,7 @@ from rest_framework.test import APITestCase
 
 from authentication.models import CustomUser
 from validator.enums import QuestionType
+from validator.exceptions import InvalidTagException
 from validator.models.question import Question
 from validator.models.causes import Causes
 from validator.models.tag import Tag
@@ -17,6 +18,7 @@ from validator.serializers import (
 )
 
 from django.core.exceptions import ObjectDoesNotExist
+from validator.constants import ErrorMsg
 
 class QuestionViewTest(APITestCase):
     def setUp(self):
@@ -48,10 +50,10 @@ class QuestionViewTest(APITestCase):
         
         # valid data
         self.valid_data = {
-            'title': 'Question 1',
+            'title': 'test',
             'question': 'Test question', 
-            'mode': Question.ModeChoices.PRIBADI,
-            'tags': ['economy', 'analysis']
+            'mode': 'PRIBADI',
+            'tags': ['analisis', 'pribadi']
         }
         self.valid_data_patch_mode = {'id': self.question_uuid, 'mode': Question.ModeChoices.PENGAWASAN}
         self.valid_data_patch_title = {'id': self.question_uuid, 'title': 'judul baru'}
@@ -65,16 +67,30 @@ class QuestionViewTest(APITestCase):
             'mode': 'PRIBADI',
             'tags': []
         }
+        self.invalid_data_too_many_tags = {
+            'title': 'test',
+            'question': 'Test question too many tags', 
+            'mode': 'PRIBADI',
+            'tags': ['analisis', 'pribadi', 'sosial', 'politik']
+        }
+        self.invalid_data_too_long_tag = {
+            'title': 'test',
+            'question': 'Test question too long tags', 
+            'mode': 'PRIBADI',
+            'tags': ['analisisiiiiiiiiiiiiiiiis']
+        }
 
         # invalid data for patch mode
         self.invalid_data_patch_mode = {'id': self.question_uuid, 'mode': 'invalid'}
         self.invalid_data_patch_mode_missing = {'id': self.question_uuid, 'mode': ''}
         self.invalid_data_patch_mode_user = {'id': self.question_uuid2, 'mode': Question.ModeChoices.PENGAWASAN}
+        self.invalid_data_patch_mode_same = {'id': self.question_uuid, 'mode': Question.ModeChoices.PRIBADI}
         
         # invalid data for patch mode
         self.invalid_data_patch_title = {'id': self.question_uuid, 'title': 'This title has more than 40 characters in it'}
-        self.invalid_data_patch_title_missing = {'id': self.question_uuid, 'mode': ''}
-        self.invalid_data_patch_title_user = {'id': self.question_uuid2, 'mode': Question.ModeChoices.PENGAWASAN}
+        self.invalid_data_patch_title_missing = {'id': self.question_uuid, 'title': ''}
+        self.invalid_data_patch_title_user = {'id': self.question_uuid2, 'title': 'something'}
+        self.invalid_data_patch_title_same = {'id': self.question_uuid, 'title': 'pertanyaan 1'}
         
         # urls
         self.post_url = 'validator:create_question'
@@ -223,6 +239,16 @@ class QuestionViewTest(APITestCase):
         url = reverse(self.post_url)
         response = self.client.post(url, self.invalid_data_empty_tags, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_too_long_tags(self):
+        url = reverse(self.post_url)
+        response = self.client.post(url, self.invalid_data_too_many_tags, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_too_many_tags(self):
+        url = reverse(self.post_url)
+        response = self.client.post(url, self.invalid_data_too_long_tag, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_post_question_invalid_value(self):
         url = reverse(self.post_url)
@@ -241,6 +267,13 @@ class QuestionViewTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(updated_question.mode, Question.ModeChoices.PENGAWASAN)
+            
+    def test_patch_mode_same_value(self):
+        url = reverse(self.patch_mode_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.invalid_data_patch_mode_same, format='json')
+        
+        self.assertEqual(response.data['detail'], ErrorMsg.VALUE_NOT_UPDATED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_patch_mode_question_invalid_value(self):
         url = reverse(self.patch_mode_url, kwargs={'pk': self.question_uuid})
@@ -282,6 +315,13 @@ class QuestionViewTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(updated_question.title, 'judul baru')
+    
+    def test_patch_title_same_value(self):
+        url = reverse(self.patch_title_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.invalid_data_patch_title_same, format='json')
+        
+        self.assertEqual(response.data['detail'], ErrorMsg.VALUE_NOT_UPDATED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_patch_title_question_invalid_value(self):
         url = reverse(self.patch_title_url, kwargs={'pk': self.question_uuid})
@@ -368,7 +408,6 @@ class QuestionViewTest(APITestCase):
     def test_get_recent_question(self):
         Question.objects.all().delete()
         url_post = reverse(self.post_url)
-        
         response__old_post = self.client.post(url_post, self.valid_data, format='json')
         old_post_id = Question.objects.get(id=response__old_post.data['id']).id
         
@@ -397,22 +436,55 @@ class QuestionViewTest(APITestCase):
         self.user1.save()
 
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?time_range=last_week')
-        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+        response = self.client.get(url + '?filter=semua&keyword=')
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value, )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], len(questions))
+   
 
-    def test_get_pengawasan_older(self):
+    def test_get_pengawasan_filter_by_pengguna(self):
+        # reset questions
         Question.objects.all().delete()
 
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?time_range=older')
+        response = self.client.get(url + '?filter=pengguna&keyword=test&')
         questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], len(questions))
 
+    def test_get_pengawasan_filter_by_topik(self):
+        # reset questions
+        Question.objects.all().delete()
+
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?filter=topik&keyword=tag1')
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+
+    def test_get_pengawasan_filter_by_judul(self):
+        # reset questions
+        Question.objects.all().delete()
+
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?filter=judul&keyword=pertanyaan')
+        questions = Question.objects.filter(mode=QuestionType.PENGAWASAN.value)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], len(questions))
+
+    def test_get_pengawasan_invalid_filter(self):
+        # reset questions
+        Question.objects.all().delete()
+
+        url = reverse(self.get_pengawasan)
+        response = self.client.get(url + '?filter=invalid&keyword=pertanyaan')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
     def test_get_pengawasan_questions_forbidden(self):
         # reset user status
         self.user1.is_superuser = False
@@ -432,24 +504,18 @@ class QuestionViewTest(APITestCase):
         self.user1.save()
         
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?time_range=last_week')
+        response = self.client.get(url + '?filter=semua')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
         self.assertIn('results', response.data)
     
-    def test_get_pengawasan_invalid_time_range(self):
-        url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?keyword=test&time_range=invalid_format')
-        
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], "Invalid time range format.")
-    
+   
     def test_get_pengawasan_unauthorized_access(self):
         # Remove authentication
         self.client.credentials()
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?keyword=test&time_range=last_week')
+        response = self.client.get(url + '?filter=semua&keyword=test')
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
@@ -461,7 +527,7 @@ class QuestionViewTest(APITestCase):
         self.user1.save()
         
         url = reverse(self.get_pengawasan)
-        response = self.client.get(url + '?keyword=&time_range=last_week')
+        response = self.client.get(url + '?filter=semua&keyword=')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
@@ -475,7 +541,7 @@ class QuestionViewTest(APITestCase):
     def test_get_all_questions_last_week(self):
         Question.objects.all().delete()
         url = reverse(self.get_all)
-        response = self.client.get(url + '?time_range=last_week')
+        response = self.client.get(url + '?filter=semua&time_range=last_week')
         questions = Question.objects.filter(user=self.user1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -484,7 +550,7 @@ class QuestionViewTest(APITestCase):
     def test_get_all_questions_older(self):
         Question.objects.all().delete()
         url = reverse(self.get_all)
-        response = self.client.get(url + '?time_range=older')
+        response = self.client.get(url + '?filter=semua&time_range=older')
         questions = Question.objects.filter(user=self.user1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -492,7 +558,7 @@ class QuestionViewTest(APITestCase):
         
     def test_get_matched(self):
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?keyword=test&time_range=last_week')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
@@ -500,7 +566,7 @@ class QuestionViewTest(APITestCase):
 
     def test_get_matched_no_keyword(self):
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?time_range=last_week')
+        response = self.client.get(url + '?filter=semua&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
@@ -508,7 +574,7 @@ class QuestionViewTest(APITestCase):
 
     def test_get_matched_invalid_time_range(self):
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?keyword=test&time_range=invalid_format')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=invalid_format')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], "Invalid time range format.")
@@ -516,7 +582,7 @@ class QuestionViewTest(APITestCase):
     def test_get_matched_unauthorized_access(self):
         self.client.credentials()
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?keyword=test&time_range=last_week')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=last_week')
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
@@ -531,7 +597,7 @@ class QuestionViewTest(APITestCase):
 
     def test_get_matched_older_questions(self):
         url = reverse(self.get_matched)
-        response = self.client.get(url + '?keyword=test&time_range=older')
+        response = self.client.get(url + '?filter=semua&keyword=test&time_range=older')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
