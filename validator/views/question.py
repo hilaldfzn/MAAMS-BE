@@ -105,12 +105,6 @@ class QuestionGet(ViewSet):
                 description='Specify query filter mode.'
             ),
             OpenApiParameter(
-                name='time_range',
-                type=str,
-                location=OpenApiParameter.QUERY,
-                description='Specify the time range for the query.'
-            ),
-            OpenApiParameter(
                 name='keyword',
                 type=str,
                 location=OpenApiParameter.QUERY,
