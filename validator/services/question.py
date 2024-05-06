@@ -114,7 +114,7 @@ class QuestionService():
 
         return response
     
-    def get_privileged(self, filter: str, user: CustomUser, keyword: str):
+    def get_privileged(self, q_filter: str, user: CustomUser, keyword: str):
         """
         Return a list for pengawasan questions by keyword and filter type for privileged users.
         """
@@ -123,13 +123,10 @@ class QuestionService():
         if not is_admin:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
-        if not filter: filter = 'semua'
+        if not q_filter: q_filter = 'semua'
         if not keyword: keyword = ''
-            
-        today_datetime = datetime.now()
-        last_week_datetime = today_datetime - timedelta(days=7)
 
-        clause = self._resolve_filter_type(filter, keyword, is_admin)
+        clause = self._resolve_filter_type(q_filter, keyword, is_admin)
         
         # query the questions with specified filters     
         mode = Q(mode=QuestionType.PENGAWASAN.value)       
@@ -140,13 +137,13 @@ class QuestionService():
 
         return response
     
-    def get_matched(self, filter: str, user: CustomUser, time_range: str, keyword: str):
+    def get_matched(self, q_filter: str, user: CustomUser, time_range: str, keyword: str):
         """
         Returns a list of matched questions corresponding to logged in user with specified filters.
         """
         is_admin = user.is_superuser and user.is_staff
         
-        if not filter: filter = 'semua'
+        if not q_filter: q_filter = 'semua'
         if not keyword: keyword = ''
 
         today_datetime = datetime.now()
@@ -155,7 +152,7 @@ class QuestionService():
         # append corresponding user to query
         user_filter = Q(user=user)
 
-        clause = self._resolve_filter_type(filter, keyword, is_admin)
+        clause = self._resolve_filter_type(q_filter, keyword, is_admin)
 
         time = self._resolve_time_range(time_range.lower(), today_datetime, last_week_datetime)
 

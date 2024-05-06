@@ -129,7 +129,7 @@ class QuestionGet(ViewSet):
         q_filter = request.query_params.get('filter')
         keyword =  request.query_params.get('keyword', '')
 
-        questions = self.service_class.get_privileged(filter=q_filter, 
+        questions = self.service_class.get_privileged(q_filter=q_filter, 
                                                       user=request.user, 
                                                       keyword=keyword)
         serializer = QuestionResponse(questions, many=True)
@@ -181,7 +181,7 @@ class QuestionGet(ViewSet):
         time_range = request.query_params.get('time_range') 
         keyword = request.query_params.get('keyword', '') 
 
-        questions = self.service_class.get_matched(filter=q_filter,
+        questions = self.service_class.get_matched(q_filter=q_filter,
                                                    user=request.user, 
                                                    time_range=time_range, 
                                                    keyword=keyword)
