@@ -3,6 +3,7 @@ import uuid
 from datetime import (
     datetime, timedelta
 )
+from multiprocessing.managers import BaseManager
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
@@ -12,6 +13,7 @@ from validator.enums import (
     QuestionType, HistoryType, FilterType
 )
 from validator.constants import ErrorMsg
+from validator.dataclasses.field_values import FieldValuesDataClass
 from validator.dataclasses.create_question import CreateQuestionDataClass 
 from validator.exceptions import (
     NotFoundRequestException, ForbiddenRequestException, 
@@ -164,6 +166,41 @@ class QuestionService():
         response = self._make_question_response(questions)
 
         return response
+
+    def get_field_values(self, user: CustomUser) -> FieldValuesDataClass:
+        """
+        Returns all unique field values attached to available questions for search bar dropdown functionality.
+        """
+        is_admin = user.is_superuser and user.is_staff
+
+        questions = Question.objects.all()
+
+        values = {
+            "judul": set(),
+            "topik": set()
+        }
+
+        # extract usernames if user is admin to allow filtering by pengguna
+        if is_admin: values['pengguna'] = set()
+        
+        for question in questions:
+            if is_admin:
+                values['pengguna'].add(question.user.username)
+            values['judul'].add(question.title)
+            # extract list of tags from question
+            tags = [tag.name for tag in question.tags.all()]
+            values['topik'].update(tags)
+
+        response = FieldValuesDataClass(
+            pengguna=[],
+            judul=list(values['judul']), 
+            topik=list(values['topik'])
+        )
+
+        if is_admin:
+            response.pengguna=list(values['pengguna'])    
+
+        return response 
 
     def update_question(self, user: CustomUser, pk: uuid, **fields):
         try:

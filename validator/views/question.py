@@ -11,7 +11,7 @@ from utils.pagination import CustomPageNumberPagination
 
 from validator.services.question import QuestionService
 from validator.serializers import (
-    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse, QuestionTitleRequest
+    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse, QuestionTitleRequest, FieldValuesResponse
 )
 
 
@@ -191,6 +191,16 @@ class QuestionGet(ViewSet):
         page = paginator.paginate_queryset(serializer.data, request)
 
         return paginator.get_paginated_response(page)
+    
+    @extend_schema(
+        description="Returns all unique question fields' values that are attached to available questions.",
+        responses=FieldValuesResponse
+    )
+    def get_field_values(self, request):
+        values = self.service_class.get_field_values(user=request.user)
+        serializer = FieldValuesResponse(values)
+        
+        return Response(serializer.data)
 
 @permission_classes([IsAuthenticated])
 class QuestionPatch(ViewSet):
