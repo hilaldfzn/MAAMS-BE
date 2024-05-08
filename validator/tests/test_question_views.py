@@ -67,6 +67,12 @@ class QuestionViewTest(APITestCase):
             'mode': 'PRIBADI',
             'tags': []
         }
+        self.invalid_data_duplicate_tags = {
+            'title': 'test',
+            'question': 'Test question duplicate tags', 
+            'mode': 'PRIBADI',
+            'tags': ['analisis', 'analisis']
+        }
         self.invalid_data_too_many_tags = {
             'title': 'test',
             'question': 'Test question too many tags', 
@@ -234,6 +240,15 @@ class QuestionViewTest(APITestCase):
         
         self.assertFalse(serializer.is_valid())
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_duplicate_tags(self):
+        url = reverse(self.post_url)
+        response = self.client.post(url, self.invalid_data_duplicate_tags, format='json')        
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response_data = response.json()
+        self.assertIn('tags', response_data)
+        self.assertEqual(len(response_data['tags']), 1)
 
     def test_post_empty_tags(self):
         url = reverse(self.post_url)
