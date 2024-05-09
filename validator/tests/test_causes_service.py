@@ -107,8 +107,8 @@ class CausesServiceTest(TestCase):
         question_id = uuid.uuid4()
         question = Question.objects.create(pk=question_id, question='Test question')
 
-        Causes.objects.create(problem=question, row=1, column=1, mode='PRIBADI', cause='Cause 1')
-        cause2 = Causes.objects.create(problem=question, row=2, column=1, mode='PRIBADI', cause='Cause 1')
+        Causes.objects.create(problem=question, row=1, column=1, mode='PRIBADI', cause='Cause 1', status=True)
+        cause2 = Causes.objects.create(problem=question, row=2, column=1, mode='PRIBADI', cause='Cause 2')
 
         with patch.object(CausesService, 'api_call', return_value=True):
             service = CausesService()
@@ -117,3 +117,15 @@ class CausesServiceTest(TestCase):
         cause2.refresh_from_db()
 
         self.assertTrue(cause2.status)
+    
+    def test_process_causes(self):
+        question_id = uuid.uuid4()
+        question = Question.objects.create(pk=question_id, question='Test question')
+
+        cause1 = Causes.objects.create(problem=question, row=1, column=1, mode='PRIBADI', cause='Cause 1', status=True)
+        
+        with patch.object(CausesService, 'api_call'):
+            service = CausesService()
+            service.validate(question_id)
+        
+        self.assertTrue(cause1.status)

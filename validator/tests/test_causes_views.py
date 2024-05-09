@@ -184,8 +184,8 @@ class CausesViewTest(APITestCase):
         question_id = uuid.uuid4()
         question = Question.objects.create(pk=question_id, question='Test question')
 
-        Causes.objects.create(problem=question, row=1, column=1, mode='PRIBADI', cause='Cause 1')
-        cause2 = Causes.objects.create(problem=question, row=2, column=1, mode='PRIBADI', cause='Cause 1')
+        Causes.objects.create(problem=question, row=1, column=1, mode='PRIBADI', cause='Cause 1', status=True)
+        cause2 = Causes.objects.create(problem=question, row=2, column=1, mode='PRIBADI', cause='Cause 2')
 
         with patch.object(CausesService, 'api_call', return_value=True):
             url = reverse(self.validate_url, kwargs={'question_id': question_id})
