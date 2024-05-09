@@ -40,6 +40,8 @@ class QuestionService():
                 raise InvalidTagException(ErrorMsg.TAG_NAME_TOO_LONG)
             try:
                 tag = Tag.objects.get(name=tag_name)
+                if tag in tags_object:
+                    continue
             except Tag.DoesNotExist:
                 tag = Tag.objects.create(name=tag_name)
             finally:
