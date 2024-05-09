@@ -39,14 +39,16 @@ class CausesService:
         problem = question.Question.objects.get(pk=question_id)
 
         for cause in causes:
-            if max_row == 1:
-                prompt = f"Is '{cause.cause}' the cause of '{problem.question}'? Answer using only True/False"
+            if cause.status:
+                continue
+            elif max_row == 1:
+                prompt = f"Is '{cause.cause}' the cause of this question: '{problem.question}'? Answer using only True/False"
                 if self.api_call(self=self, prompt=prompt):
                     cause.status = True
                     cause.save()
             else:
                 prev_cause = Causes.objects.filter(problem_id=question_id, row=max_row-1, column=cause.column).first()
-                if prev_cause and prev_cause.cause == cause.cause:
+                if prev_cause and prev_cause.status:
                     prompt = f"Is '{cause.cause}' the cause of '{prev_cause.cause}'? Answer using only True/False"
                     if self.api_call(self=self, prompt=prompt):
                         cause.status = True
