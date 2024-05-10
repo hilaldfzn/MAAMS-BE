@@ -1,5 +1,5 @@
 from typing import List
-import Anthropic, HUMAN_PROMPT, AI_PROMPT
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from authentication.models import CustomUser
@@ -107,7 +107,7 @@ class CausesService:
         if user.uuid != cause_user_uuid and cause[0].mode == Causes.ModeChoices.PRIBADI:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
-        if user.is_staff and user.uuid != cause_user_uuid and not cause[0].mode == Causes.ModeChoices.PENGAWASAN:
+        if not user.is_staff and user.uuid != cause_user_uuid and cause[0].mode == Causes.ModeChoices.PENGAWASAN:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
         return [
