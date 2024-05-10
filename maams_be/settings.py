@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-
+import sentry_sdk
 
 # Setup environment variables.
 # Production & staging environment variables will be stored on Dockerfile
@@ -31,7 +31,7 @@ if env_file:
 active_env = str(os.environ["ENVIRONMENT"])
 # If a new environment is added,
 # check here to load .env file if file is present.
-if active_env == 'DEVELOPMENT':
+if active_env == 'DEVELOPMENT' or active_env == 'LOCAL':
     load_dotenv('./.env.dev')
 elif active_env == 'TESTING':
     load_dotenv('./.env.test')
@@ -104,6 +104,8 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5,
 }
 
 # JWT access token properties
@@ -111,7 +113,7 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     'USER_ID_FIELD': 'uuid',
 }
@@ -119,12 +121,12 @@ SIMPLE_JWT = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 # DRF-Spectacular configurations, OpenAPI3 schema generator
@@ -237,3 +239,10 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 OPENAI_API_KEY = get_env_value("OPENAI_API_KEY")
+
+# Sentry
+if active_env == "DEVELOPMENT":
+    sentry_sdk.init(
+        dsn=get_env_value("SENTRY_DSN"),
+        traces_sample_rate=1.0,
+    )
