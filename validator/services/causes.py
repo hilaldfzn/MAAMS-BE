@@ -41,18 +41,18 @@ class CausesService:
         for cause in causes:
             if cause.status:
                 continue
-            elif max_row == 1:
+            
+            prompt = ""
+            if max_row == 1:
                 prompt = f"Is '{cause.cause}' the cause of this question: '{problem.question}'? Answer using only True/False"
-                if self.api_call(self=self, prompt=prompt):
-                    cause.status = True
-                    cause.save()
+                
             else:
                 prev_cause = Causes.objects.filter(problem_id=question_id, row=max_row-1, column=cause.column).first()
-                if prev_cause and prev_cause.status:
-                    prompt = f"Is '{cause.cause}' the cause of '{prev_cause.cause}'? Answer using only True/False"
-                    if self.api_call(self=self, prompt=prompt):
-                        cause.status = True
-                        cause.save()
+                prompt = f"Is '{cause.cause}' the cause of '{prev_cause.cause}'? Answer using only True/False"
+            
+            if self.api_call(self=self, prompt=prompt):
+                cause.status = True
+                cause.save()
 
 
     def create(self, question_id: uuid, cause: str, row: int, column: int, mode: str) -> CreateCauseDataClass:

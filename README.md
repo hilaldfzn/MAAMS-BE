@@ -72,7 +72,7 @@
     DB_PASSWORD=<your local DB password>
     DB_NAME=<your local DB name>
 
-    OPENAI_API_KEY=<your openAI API token>
+    CLAUDE_API_KEY=<your CLAUDE API token>
     SENTRY_DSN=<your sentry dsn>
     ```
 
