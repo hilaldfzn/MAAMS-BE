@@ -209,7 +209,7 @@ class CausesViewTest(APITestCase):
     def test_rca_row_equal_1(self):
         with patch.object(CausesService, 'api_call', return_value=True):
             url = reverse(self.validate_url, kwargs={'question_id': self.question_uuid1})
-            response = self.client.post(url)
+            response = self.client.patch(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.causes1.refresh_from_db()
@@ -225,7 +225,7 @@ class CausesViewTest(APITestCase):
 
         with patch.object(CausesService, 'api_call', return_value=True):
             url = reverse(self.validate_url, kwargs={'question_id': question_id})
-            response = self.client.post(url)
+            response = self.client.patch(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         cause2.refresh_from_db()
@@ -236,7 +236,7 @@ class CausesViewTest(APITestCase):
 
         with patch.object(CausesService, 'api_call', return_value=False):
             url = reverse(self.validate_url, kwargs={'question_id': self.question_uuid1})
-            response = self.client.post(url)
+            response = self.client.patch(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(Causes.objects.get(problem=Question.objects.get(pk=self.question_uuid1), row=2).status)
