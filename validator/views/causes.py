@@ -66,7 +66,7 @@ class ValidateView(APIView):
         description='Run Root Cause Analysis for a specific question and row',
         responses=CausesResponse,
     )
-    def post(self, request, question_id):
+    def patch(self, request, question_id):
         updated_causes = CausesService.validate(self=CausesService, question_id=question_id)
         serializer = CausesResponse(updated_causes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
