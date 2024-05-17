@@ -15,7 +15,9 @@ class InvalidTimeRangeRequestException(APIException):
 
 class EmptyTagException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
-
+    
+class UniqueTagException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
 
 class InvalidTagException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST

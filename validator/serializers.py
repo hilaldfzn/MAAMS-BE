@@ -18,6 +18,15 @@ class QuestionTitleRequest(serializers.Serializer):
         ref_name = 'QuestionTitleRequest'
         
     title = serializers.CharField(max_length=40)
+    
+class QuestionTagRequest(serializers.Serializer):
+    class Meta:
+        ref_name = 'QuestionTagRequest'
+        
+    tags = serializers.ListField(
+        min_length=1,
+        max_length=3,
+        child=serializers.CharField(max_length=10))    
 
 class QuestionRequest(BaseQuestion):
     class Meta:

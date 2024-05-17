@@ -21,6 +21,7 @@ urlpatterns = [
     path('baru/', QuestionPost.as_view(), name="create_question"),
     path('ubah/<uuid:pk>/', QuestionPatch.as_view({'patch': 'patch_mode'}), name="patch_mode_question"),
     path('ubah/judul/<uuid:pk>/', QuestionPatch.as_view({'patch': 'patch_title'}), name="patch_title_question"),
+    path('ubah/tags/<uuid:pk>/', QuestionPatch.as_view({'patch': 'patch_tags'}), name="patch_tags_question"),
     # causes
     path('hapus/<uuid:pk>/', QuestionDelete.as_view(), name="delete_question"),
     # causes

@@ -11,7 +11,7 @@ from utils.pagination import CustomPageNumberPagination
 
 from validator.services.question import QuestionService
 from validator.serializers import (
-    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse, QuestionTitleRequest, FieldValuesResponse
+    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse, QuestionTagRequest, QuestionTitleRequest, FieldValuesResponse
 )
 
 
@@ -229,6 +229,14 @@ class QuestionPatch(ViewSet):
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data)
+    
+    @extend_schema(
+        description='Request and Response data for updating question tags',
+        request=QuestionTagRequest,
+        responses=QuestionResponse,
+    )
+    def patch_tags(self, request, pk):
+        return ""
     
 @permission_classes([IsAuthenticated])
 class QuestionDelete(APIView):
