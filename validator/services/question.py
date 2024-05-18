@@ -213,21 +213,10 @@ class QuestionService():
         
         updated = False
         
-        tags_object = []
-
         if 'tags' in fields:
             new_tags = fields.pop('tags')
             
-            for tag_name in new_tags:
-                try:
-                    tag = Tag.objects.get(name=tag_name)
-                    if tag in tags_object:
-                        raise UniqueTagException(ErrorMsg.TAG_MUST_BE_UNIQUE)
-                except Tag.DoesNotExist:
-                    tag = Tag.objects.create(name=tag_name)
-                    tags_object.append(tag)
-                finally:
-                    tags_object.append(tag)
+            tags_object = self._validate_tags(new_tags)
             
             current_tags = set(question.tags.all())
             new_tags_set = set(tags_object)
@@ -345,3 +334,20 @@ class QuestionService():
                 raise InvalidTimeRangeRequestException(ErrorMsg.INVALID_TIME_RANGE)
         
         return time
+    
+    def _validate_tags(self, new_tags: List[str]):
+        tags_object = []
+        
+        for tag_name in new_tags:
+                try:
+                    tag = Tag.objects.get(name=tag_name)
+                    if tag in tags_object:
+                        raise UniqueTagException(ErrorMsg.TAG_MUST_BE_UNIQUE)
+                except Tag.DoesNotExist:
+                    tag = Tag.objects.create(name=tag_name)
+                    tags_object.append(tag)
+                finally:
+                    tags_object.append(tag)
+        
+        return tags_object
+
