@@ -254,10 +254,8 @@ class QuestionViewTest(APITestCase):
         url = reverse(self.post_url)
         response = self.client.post(url, self.invalid_data_duplicate_tags, format='json')        
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response_data = response.json()
-        self.assertIn('tags', response_data)
-        self.assertEqual(len(response_data['tags']), 1)
+        self.assertEqual(response.data['detail'], ErrorMsg.TAG_MUST_BE_UNIQUE)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_post_empty_tags(self):
         url = reverse(self.post_url)
