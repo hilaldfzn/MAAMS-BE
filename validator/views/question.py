@@ -25,7 +25,8 @@ class QuestionPost(APIView):
     def post(self, request):
         request_serializer = QuestionRequest(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        question = QuestionService.create(self, user=request.user, **request_serializer.validated_data)
+        service_class = QuestionService()
+        question = service_class.create(user=request.user, **request_serializer.validated_data)
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
