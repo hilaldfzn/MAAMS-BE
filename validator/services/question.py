@@ -306,7 +306,6 @@ class QuestionService():
                         raise UniqueTagException(ErrorMsg.TAG_MUST_BE_UNIQUE)
                 except Tag.DoesNotExist:
                     tag = Tag.objects.create(name=tag_name)
-                    tags_object.append(tag)
                 finally:
                     tags_object.append(tag)
         
