@@ -18,7 +18,8 @@ from validator.dataclasses.create_question import CreateQuestionDataClass
 from validator.exceptions import (
     NotFoundRequestException, ForbiddenRequestException, 
     InvalidTimeRangeRequestException, InvalidTagException,
-    InvalidFiltersException, ValueNotUpdatedException
+    InvalidFiltersException, ValueNotUpdatedException,
+    UniqueTagException
 )
 from validator.models.causes import Causes
 from validator.models.question import Question
@@ -212,12 +213,36 @@ class QuestionService():
         
         updated = False
         
+        tags_object = []
+
+        if 'tags' in fields:
+            new_tags = fields.pop('tags')
+            
+            for tag_name in new_tags:
+                try:
+                    tag = Tag.objects.get(name=tag_name)
+                    if tag in tags_object:
+                        raise UniqueTagException(ErrorMsg.TAG_MUST_BE_UNIQUE)
+                    if tag not in tags_object:
+                        tags_object.append(tag)
+                except Tag.DoesNotExist:
+                    tag = Tag.objects.create(name=tag_name)
+                    tags_object.append(tag)
+            
+            current_tags = set(question.tags.all())
+            new_tags_set = set(tags_object)
+            
+            if current_tags != new_tags_set:
+                question.tags.set(new_tags_set)
+                updated = True
+            
         for field, new_value in fields.items():
-            if getattr(question, field) != new_value:
+            if field != 'tags' and getattr(question, field) != new_value:
                 setattr(question, field, new_value)
                 updated = True
+                
         question.save()
-            
+                
         if not updated:
             raise ValueNotUpdatedException(ErrorMsg.VALUE_NOT_UPDATED)
 

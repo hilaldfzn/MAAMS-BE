@@ -236,7 +236,12 @@ class QuestionPatch(ViewSet):
         responses=QuestionResponse,
     )
     def patch_tags(self, request, pk):
-        return ""
+        request_serializer = QuestionTagRequest(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        question = QuestionService.update_question(self, user=request.user, pk=pk, tags=request_serializer.validated_data.get('tags'))
+        response_serializer = QuestionResponse(question)
+        
+        return Response(response_serializer.data)
     
 @permission_classes([IsAuthenticated])
 class QuestionDelete(APIView):
