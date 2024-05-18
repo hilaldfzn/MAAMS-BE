@@ -46,7 +46,7 @@ class CausesViewTest(APITestCase):
             user=self.user2,
             id=self.question_uuid2,
             question='pertanyaan',
-            mode=Question.ModeChoices.PRIBADI
+            mode=Question.ModeChoices.PENGAWASAN
         )
 
         self.causes_uuid = uuid.uuid4()
