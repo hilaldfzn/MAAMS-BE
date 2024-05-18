@@ -223,10 +223,10 @@ class QuestionService():
                     tag = Tag.objects.get(name=tag_name)
                     if tag in tags_object:
                         raise UniqueTagException(ErrorMsg.TAG_MUST_BE_UNIQUE)
-                    if tag not in tags_object:
-                        tags_object.append(tag)
                 except Tag.DoesNotExist:
                     tag = Tag.objects.create(name=tag_name)
+                    tags_object.append(tag)
+                finally:
                     tags_object.append(tag)
             
             current_tags = set(question.tags.all())
