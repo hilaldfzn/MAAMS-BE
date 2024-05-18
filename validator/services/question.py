@@ -42,7 +42,7 @@ class QuestionService():
             try:
                 tag = Tag.objects.get(name=tag_name)
                 if tag in tags_object:
-                    continue
+                    raise UniqueTagException(ErrorMsg.TAG_MUST_BE_UNIQUE)
             except Tag.DoesNotExist:
                 tag = Tag.objects.create(name=tag_name)
             finally:
