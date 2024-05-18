@@ -37,18 +37,10 @@ class QuestionService():
 
         for tag in tags_object:
             question_object.tags.add(tag)
-        
-        tags = [tag.name for tag in question_object.tags.all()]
+            
+        response = self._make_question_response([question_object])
 
-        return CreateQuestionDataClass(
-            username = question_object.user.username,
-            id = question_object.id,
-            title=question_object.title,
-            question = question_object.question,
-            created_at = question_object.created_at,
-            mode = question_object.mode,
-            tags=tags
-        )
+        return response[0]
     
     def get(self, user:CustomUser, pk:uuid):
         try:
@@ -188,11 +180,11 @@ class QuestionService():
 
     def update_question(self, user: CustomUser, pk: uuid, **fields):
         try:
-            question = Question.objects.get(pk=pk)
+            question_object = Question.objects.get(pk=pk)
         except Question.DoesNotExist:
             raise NotFoundRequestException(ErrorMsg.NOT_FOUND)
         
-        if user.uuid != question.user.uuid:
+        if user.uuid != question_object.user.uuid:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_UPDATE)
         
         updated = False
@@ -202,33 +194,26 @@ class QuestionService():
             
             tags_object = self._validate_tags(new_tags)
             
-            current_tags = set(question.tags.all())
+            current_tags = set(question_object.tags.all())
             new_tags_set = set(tags_object)
             
             if current_tags != new_tags_set:
-                question.tags.set(new_tags_set)
+                question_object.tags.set(new_tags_set)
                 updated = True
             
         for field, new_value in fields.items():
-            if field != 'tags' and getattr(question, field) != new_value:
-                setattr(question, field, new_value)
+            if field != 'tags' and getattr(question_object, field) != new_value:
+                setattr(question_object, field, new_value)
                 updated = True
                 
-        question.save()
+        question_object.save()
                 
         if not updated:
             raise ValueNotUpdatedException(ErrorMsg.VALUE_NOT_UPDATED)
 
-        tags = [tag.name for tag in question.tags.all()]
-        return CreateQuestionDataClass(
-            username=question.user.username,
-            id=question.id,
-            title=question.title,
-            question=question.question,
-            created_at=question.created_at,
-            mode=question.mode,
-            tags=tags
-        )
+        response = self._make_question_response([question_object])
+
+        return response[0]
         
     def delete(self, user:CustomUser, pk:uuid):
         try:
@@ -241,21 +226,13 @@ class QuestionService():
         if user.uuid != user_id:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_DELETE)
         
-        tags = [tag.name for tag in question_object.tags.all()]
-        question_data = CreateQuestionDataClass(
-            username = question_object.user.username,
-            id = question_object.id,
-            title=question_object.title,
-            question = question_object.question,
-            created_at = question_object.created_at,
-            mode = question_object.mode,
-            tags=tags
-        )
+        response = self._make_question_response([question_object])
+
         related_causes = Causes.objects.filter(problem=question_object)
         related_causes.delete()
         question_object.delete()
         
-        return question_data 
+        return response[0]    
     
     """
     Utility functions.
