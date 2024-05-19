@@ -51,7 +51,7 @@ def parse_env_value(key: str, value: str) -> str | bool | int | None:
     """
     Parses environment variable into either bool, strings, ints, or None type.
     """
-    case_sensitive_keys = ["CLAUDE_API_KEY"]
+    case_sensitive_keys = ["GROQ_API_KEY"]
     
     if key not in case_sensitive_keys:
         value = value.lower()
@@ -246,7 +246,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CLAUDE_API_KEY = get_env_value("CLAUDE_API_KEY")
+GROQ_API_KEY = get_env_value("GROQ_API_KEY")
 
 # Sentry
 if active_env == "DEVELOPMENT":
