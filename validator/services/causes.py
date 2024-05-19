@@ -1,3 +1,4 @@
+from typing import List
 from groq import Groq
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -102,9 +103,35 @@ class CausesService:
             cause=cause.cause,
             status=cause.status
         )
-        
 
-    def update(self, user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
+    def get_list(self, user: CustomUser, question_id: uuid) -> List[CreateCauseDataClass]:
+        try:
+            cause = Causes.objects.filter(problem_id=question_id)
+            current_question = question.Question.objects.get(pk=question_id)
+            cause_user_uuid = current_question.user.uuid
+        except ObjectDoesNotExist:
+            raise NotFoundRequestException(ErrorMsg.CAUSE_NOT_FOUND)
+        
+        if user.uuid != cause_user_uuid and current_question.mode == question.Question.ModeChoices.PRIBADI:
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
+        
+        if not user.is_staff and user.uuid != cause_user_uuid and current_question.mode == question.Question.ModeChoices.PENGAWASAN:
+            raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
+        
+        return [
+            CreateCauseDataClass(
+                question_id=question_id,
+                id=cause.id,
+                row=cause.row,
+                column=cause.column,
+                mode=cause.mode,
+                cause=cause.cause,
+                status=cause.status
+            )
+            for cause in cause
+        ]
+
+    def patch_cause(self, user: CustomUser, question_id: uuid, pk: uuid, cause: str) -> CreateCauseDataClass:
         try:
             causes = Causes.objects.get(problem_id = question_id, pk=pk)
             causes.cause = cause

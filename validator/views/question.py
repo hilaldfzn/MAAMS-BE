@@ -11,7 +11,7 @@ from utils.pagination import CustomPageNumberPagination
 
 from validator.services.question import QuestionService
 from validator.serializers import (
-    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse, QuestionTitleRequest, FieldValuesResponse
+    QuestionRequest, QuestionResponse, BaseQuestion, PaginatedQuestionResponse, QuestionTagRequest, QuestionTitleRequest, FieldValuesResponse
 )
 
 
@@ -25,7 +25,8 @@ class QuestionPost(APIView):
     def post(self, request):
         request_serializer = QuestionRequest(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        question = QuestionService.create(self, user=request.user, **request_serializer.validated_data)
+        service_class = QuestionService()
+        question = service_class.create(user=request.user, **request_serializer.validated_data)
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -204,6 +205,8 @@ class QuestionGet(ViewSet):
 
 @permission_classes([IsAuthenticated])
 class QuestionPatch(ViewSet):
+    service_class = QuestionService()
+    
     @extend_schema(
         description='Request and Response data for updating question mode',
         request=BaseQuestion,
@@ -212,7 +215,7 @@ class QuestionPatch(ViewSet):
     def patch_mode(self, request, pk):
         request_serializer = BaseQuestion(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        question = QuestionService.update_question(self, user=request.user, pk=pk, mode=request_serializer.validated_data.get('mode'))
+        question = self.service_class.update_question(user=request.user, pk=pk, mode=request_serializer.validated_data.get('mode'))
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data)
@@ -225,7 +228,20 @@ class QuestionPatch(ViewSet):
     def patch_title(self, request, pk):
         request_serializer = QuestionTitleRequest(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        question = QuestionService.update_question(self, user=request.user, pk=pk, title=request_serializer.validated_data.get('title'))
+        question = self.service_class.update_question(user=request.user, pk=pk, title=request_serializer.validated_data.get('title'))
+        response_serializer = QuestionResponse(question)
+        
+        return Response(response_serializer.data)
+    
+    @extend_schema(
+        description='Request and Response data for updating question tags',
+        request=QuestionTagRequest,
+        responses=QuestionResponse,
+    )
+    def patch_tags(self, request, pk):
+        request_serializer = QuestionTagRequest(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        question = self.service_class.update_question(user=request.user, pk=pk, tags=request_serializer.validated_data.get('tags'))
         response_serializer = QuestionResponse(question)
         
         return Response(response_serializer.data)
@@ -236,7 +252,8 @@ class QuestionDelete(APIView):
         description='Request and Response data for deleting a question',
     )
     def delete(self, request, pk):
-        question = QuestionService.delete(self, user=request.user, pk=pk)
+        service_class = QuestionService()
+        question = service_class.delete(user=request.user, pk=pk)
         response_serializer = QuestionResponse(question)
         
         response_data = {
