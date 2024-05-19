@@ -9,7 +9,6 @@ from rest_framework.test import APITestCase
 
 from authentication.models import CustomUser
 from validator.enums import QuestionType
-from validator.exceptions import InvalidTagException
 from validator.models.question import Question
 from validator.models.causes import Causes
 from validator.models.tag import Tag
@@ -57,6 +56,7 @@ class QuestionViewTest(APITestCase):
         }
         self.valid_data_patch_mode = {'id': self.question_uuid, 'mode': Question.ModeChoices.PENGAWASAN}
         self.valid_data_patch_title = {'id': self.question_uuid, 'title': 'judul baru'}
+        self.valid_data_patch_tags = {'id': self.question_uuid, 'tags': ['analisis', 'pribadi']}
 
         # invalid data for post
         self.invalid_data_missing = {'question': 'Test question missing', 'mode': ''}
@@ -92,12 +92,19 @@ class QuestionViewTest(APITestCase):
         self.invalid_data_patch_mode_user = {'id': self.question_uuid2, 'mode': Question.ModeChoices.PENGAWASAN}
         self.invalid_data_patch_mode_same = {'id': self.question_uuid, 'mode': Question.ModeChoices.PRIBADI}
         
-        # invalid data for patch mode
+        # invalid data for patch title
         self.invalid_data_patch_title = {'id': self.question_uuid, 'title': 'This title has more than 40 characters in it'}
         self.invalid_data_patch_title_missing = {'id': self.question_uuid, 'title': ''}
         self.invalid_data_patch_title_user = {'id': self.question_uuid2, 'title': 'something'}
         self.invalid_data_patch_title_same = {'id': self.question_uuid, 'title': 'pertanyaan 1'}
         
+        #invalid data for patch 
+        self.invalid_data_patch_tags_same = {'id': self.question_uuid, 'tags': ['tag2', 'tag1']}
+        self.invalid_data_patch_tags_too_long = {'id': self.question_uuid, 'tags': ['analisisiiiiiiiiiiiiiiiis']}        
+        self.invalid_data_patch_tags_too_many = {'id': self.question_uuid, 'tags': ['analisis', 'pribadi', 'sosial', 'politik']}        
+        self.invalid_data_patch_tags_duplicate = {'id': self.question_uuid, 'tags': ['analisis', 'analisis']}
+        self.invalid_data_patch_tags_empty = {'id': self.question_uuid, 'tags': []}
+
         # urls
         self.post_url = 'validator:create_question'
         self.get_url = 'validator:get_question'
@@ -105,6 +112,7 @@ class QuestionViewTest(APITestCase):
         self.get_pengawasan = 'validator:get_question_list_pengawasan'
         self.patch_mode_url = 'validator:patch_mode_question'
         self.patch_title_url = 'validator:patch_title_question'
+        self.patch_tags_url = 'validator:patch_tags_question'
         self.delete_url = 'validator:delete_question'
         self.get_matched = 'validator:get_matched'
         self.get_recent = 'validator:get_recent'
@@ -246,10 +254,8 @@ class QuestionViewTest(APITestCase):
         url = reverse(self.post_url)
         response = self.client.post(url, self.invalid_data_duplicate_tags, format='json')        
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response_data = response.json()
-        self.assertIn('tags', response_data)
-        self.assertEqual(len(response_data['tags']), 1)
+        self.assertEqual(response.data['detail'], ErrorMsg.TAG_MUST_BE_UNIQUE)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_post_empty_tags(self):
         url = reverse(self.post_url)
@@ -371,6 +377,48 @@ class QuestionViewTest(APITestCase):
         self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk mengubah analisis ini.")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
+    def test_patch_tags(self):
+        url = reverse(self.patch_tags_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.valid_data_patch_tags, format='json')
+        updated_question = Question.objects.get(pk=self.question_uuid)
+        updated_tag_names = [tag.name for tag in updated_question.tags.all()]
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['tags'], updated_tag_names)
+        
+    def test_patch_tags_same_value(self):
+        url = reverse(self.patch_tags_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.invalid_data_patch_tags_same, format='json')
+        self.assertEqual(response.data['detail'], ErrorMsg.VALUE_NOT_UPDATED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_patch_tags_too_long(self):
+        url = reverse(self.patch_tags_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.invalid_data_patch_tags_too_long, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_patch_tags_too_many(self):
+        url = reverse(self.patch_tags_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.invalid_data_patch_tags_too_many, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_patch_tags_duplicate(self):
+        url = reverse(self.patch_tags_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.invalid_data_patch_tags_duplicate, format='json')
+        self.assertEqual(response.data['detail'], ErrorMsg.TAG_MUST_BE_UNIQUE)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_patch_tags_empty(self):
+        url = reverse(self.patch_tags_url, kwargs={'pk': self.question_uuid})
+        response = self.client.patch(url, self.invalid_data_patch_tags_empty, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_patch_tags_forbidden(self):
+        url = reverse(self.patch_tags_url, kwargs={'pk': self.question_uuid2})
+        response = self.client.patch(url, self.valid_data_patch_tags, format='json')
+        self.assertEqual(response.data['detail'], "Pengguna tidak diizinkan untuk mengubah analisis ini.")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            
     def test_delete_question(self):
         url = reverse(self.delete_url, kwargs={'pk': self.question_uuid})
         response = self.client.delete(url)
