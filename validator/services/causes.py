@@ -100,14 +100,15 @@ class CausesService:
     def get_list(self, user: CustomUser, question_id: uuid) -> List[CreateCauseDataClass]:
         try:
             cause = Causes.objects.filter(problem_id=question_id)
-            cause_user_uuid = question.Question.objects.get(pk=question_id).user.uuid
+            current_question = question.Question.objects.get(pk=question_id)
+            cause_user_uuid = current_question.user.uuid
         except ObjectDoesNotExist:
             raise NotFoundRequestException(ErrorMsg.CAUSE_NOT_FOUND)
         
-        if user.uuid != cause_user_uuid and cause[0].mode == Causes.ModeChoices.PRIBADI:
+        if user.uuid != cause_user_uuid and current_question.mode == question.Question.ModeChoices.PRIBADI:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
-        if not user.is_staff and user.uuid != cause_user_uuid and cause[0].mode == Causes.ModeChoices.PENGAWASAN:
+        if not user.is_staff and user.uuid != cause_user_uuid and current_question.mode == question.Question.ModeChoices.PENGAWASAN:
             raise ForbiddenRequestException(ErrorMsg.FORBIDDEN_GET)
         
         return [
