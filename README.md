@@ -72,7 +72,7 @@
     DB_PASSWORD=<your local DB password>
     DB_NAME=<your local DB name>
 
-    CLAUDE_API_KEY=<your CLAUDE API token>
+    GROQ_API_KEY=<your CLAUDE API token>
     SENTRY_DSN=<your sentry dsn>
     ```
 

@@ -1,5 +1,5 @@
 from typing import List
-from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+from groq import Groq
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from authentication.models import CustomUser
@@ -14,25 +14,32 @@ import requests
 
 class CausesService:
     def api_call(self, prompt: str):
-        client = Anthropic(api_key=settings.CLAUDE_API_KEY)
-        full_prompt = f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}"
-
+        client = Groq(api_key=settings.GROQ_API_KEY)
+        
         try:
-            response = client.completions.create(
-                model="claude-2.1",
-                max_tokens_to_sample=300,
-                prompt=full_prompt,
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem.",
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                model="llama3-8b-8192",
             )
             
-            answer = response.completion.strip()
+            answer = chat_completion.choices[0].message.content
             
         except requests.exceptions.RequestException:
             raise AIServiceErrorException(ErrorMsg.AI_SERVICE_ERROR)
-            
-        if answer.startswith('True'):
+        
+        if answer.startswith("True"):
             return True
-        elif answer.startswith('False'):
-            return False
+        else:
+            return False      
     
     def validate(self, question_id: uuid):
         max_row = Causes.objects.filter(problem_id=question_id).order_by('-row').values_list('row', flat=True).first()
