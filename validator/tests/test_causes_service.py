@@ -35,6 +35,7 @@ class CausesServiceTest(TestCase):
                 }
             ],
             model="llama3-8b-8192",
+            max_tokens=5
         )
 
     @patch('validator.services.causes.Groq')
@@ -63,6 +64,7 @@ class CausesServiceTest(TestCase):
                 }
             ],
             model="llama3-8b-8192",
+            max_tokens=5
         )
 
     @patch('validator.services.causes.Groq')
@@ -90,6 +92,7 @@ class CausesServiceTest(TestCase):
                 }
             ],
             model="llama3-8b-8192",
+            max_tokens=5
         )
 
         self.assertTrue("Failed to call the AI service." in str(context.exception))

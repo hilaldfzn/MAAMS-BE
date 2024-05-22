@@ -33,7 +33,6 @@ class CausesService:
             )
             
             answer = chat_completion.choices[0].message.content
-            print(answer)
         except requests.exceptions.RequestException:
             raise AIServiceErrorException(ErrorMsg.AI_SERVICE_ERROR)
         
