@@ -9,3 +9,4 @@ class CreateCauseDataClass(BaseModel):
     mode: str
     cause: str
     status: bool
+    root_status: bool

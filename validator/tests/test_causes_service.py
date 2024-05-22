@@ -18,19 +18,20 @@ class CausesServiceTest(TestCase):
         mock_groq.return_value = mock_client
 
         service = CausesService()
-        prompt = "Is 'Example cause' the cause of 'Example problem'? Answer using only True/False"
-        response = service.api_call(prompt)
+        system_message = "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem."
+        user_prompt = "Is 'Example cause' the cause of 'Example problem'? Answer using only True/False"
+        response = service.api_call(system_message, user_prompt)
 
         self.assertTrue(response)
         mock_client.chat.completions.create.assert_called_once_with(
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem.",
+                    "content": system_message,
                 },
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": user_prompt
                 }
             ],
             model="llama3-8b-8192",
@@ -40,24 +41,25 @@ class CausesServiceTest(TestCase):
     def test_api_call_returns_false(self, mock_groq):
         mock_client = Mock()
         mock_chat_completion = Mock()
-        mock_chat_completion.choices = [Mock(message=Mock(content='False this is not the cause'))]
+        mock_chat_completion.choices = [Mock(message=Mock(content='False'))]
         mock_client.chat.completions.create.return_value = mock_chat_completion
         mock_groq.return_value = mock_client
 
         service = CausesService()
-        prompt = "Is 'Example cause' the cause of 'Example problem'? Answer using only True/False"
-        response = service.api_call(prompt)
+        system_message = "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem."
+        user_prompt = "Is 'Example cause' the cause of 'Example problem'? Answer using only True/False"
+        response = service.api_call(system_message, user_prompt)
 
         self.assertFalse(response)
         mock_client.chat.completions.create.assert_called_once_with(
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem.",
+                    "content": system_message,
                 },
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": user_prompt
                 }
             ],
             model="llama3-8b-8192",
@@ -70,20 +72,21 @@ class CausesServiceTest(TestCase):
         mock_groq.return_value = mock_client
 
         service = CausesService()
-        prompt = "Is 'Example cause' the cause of 'Example problem'? Answer using only True/False"
+        system_message = "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem."
+        user_prompt = "Is 'Example cause' the cause of 'Example problem'? Answer using only True/False"
 
         with self.assertRaises(AIServiceErrorException) as context:
-            service.api_call(prompt)
+            service.api_call(system_message, user_prompt)
 
         mock_client.chat.completions.create.assert_called_once_with(
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem.",
+                    "content": system_message,
                 },
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": user_prompt
                 }
             ],
             model="llama3-8b-8192",
@@ -98,9 +101,10 @@ class CausesServiceTest(TestCase):
         mock_groq.return_value = mock_client
 
         service = CausesService()
-        prompt = "test prompt"
+        system_message = "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem."
+        user_prompt = "test prompt"
         with self.assertRaises(Exception):
-            service.api_call(prompt)
+            service.api_call(system_message, user_prompt)
 
     @patch('validator.services.causes.Groq')
     def test_api_call_forbidden_access(self, mock_groq):
@@ -109,9 +113,10 @@ class CausesServiceTest(TestCase):
         mock_groq.return_value = mock_client
 
         service = CausesService()
-        prompt = "Test prompt"
+        system_message = "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem."
+        user_prompt = "Test prompt"
         with self.assertRaises(Exception):
-            service.api_call(prompt)
+            service.api_call(system_message, user_prompt)
 
     def test_rca_row_1(self):
         question_id = uuid.uuid4()
@@ -135,12 +140,14 @@ class CausesServiceTest(TestCase):
         Causes.objects.create(problem=question, row=1, column=1, mode='PRIBADI', cause='Cause 1', status=True)
         cause2 = Causes.objects.create(problem=question, row=2, column=1, mode='PRIBADI', cause='Cause 2')
 
-        with patch.object(CausesService, 'api_call', return_value=True):
+        with patch.object(CausesService, 'api_call', return_value=True), \
+             patch.object(CausesService, 'validate_root', return_value=True):
             service = CausesService()
             service.validate(question_id)
 
         cause2.refresh_from_db()
         self.assertTrue(cause2.status)
+        self.assertTrue(cause2.root_status)
 
     def test_process_causes(self):
         question_id = uuid.uuid4()
