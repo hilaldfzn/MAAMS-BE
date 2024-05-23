@@ -35,8 +35,6 @@ if active_env == 'DEVELOPMENT' or active_env == 'LOCAL':
     load_dotenv('./.env.dev')
 elif active_env == 'TESTING':
     load_dotenv('./.env.test')
-elif active_env == 'PRODUCTION':
-    load_dotenv('./.env.prod')
  
 def get_env_value(env_variable: str) -> str | int | bool | None:
     """
