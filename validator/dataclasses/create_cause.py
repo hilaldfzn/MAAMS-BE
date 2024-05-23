@@ -10,3 +10,4 @@ class CreateCauseDataClass(BaseModel):
     cause: str
     status: bool
     root_status: bool
+    feedback: str

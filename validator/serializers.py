@@ -99,3 +99,4 @@ class CausesResponse(BaseCauses):
     column = serializers.IntegerField()
     status = serializers.BooleanField()
     root_status = serializers.BooleanField()
+    feedback = serializers.CharField()

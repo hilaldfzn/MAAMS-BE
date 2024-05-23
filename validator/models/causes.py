@@ -18,3 +18,4 @@ class Causes(models.Model):
     cause = models.CharField(max_length = 120)
     status = models.BooleanField(default=False)
     root_status = models.BooleanField(default=False)
+    feedback = models.CharField(max_length = 50, default='')
