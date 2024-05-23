@@ -122,12 +122,13 @@ Build-Production:
   script:
     - ls -a
     - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
-    - docker build --build-arg ENVIRONMENT=$PRODUCTION --build-arg SECRET_KEY=$SECRET_KEY -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
+    - docker build --build-arg ENVIRONMENT=$PRODUCTION --build-arg ALLOWED_HOSTS=$ALLOWED_HOSTS --build-arg SECRET_KEY=$SECRET_KEY --build-arg DEBUG=False --build-arg DB_HOST=$DB_HOST_PROD --build-arg DB_NAME=$DB_NAME_PROD --build-arg DB_PORT=$DB_PORT_PROD --build-arg DB_USER=$DB_USER_PROD --build-arg DB_PASSWORD=$DB_PASSWORD_PROD --build-arg HOST_FE=$HOST_FE --build-arg GROQ_API_KEY=$GROQ_API_KEY --build-arg SENTRY_DSN=$SENTRY_DSN -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
     - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
   tags:
     - dind
   only:
-    - master
+    - main
+    - ci-cd
 
 
 Sonarcloud-Check:
@@ -148,7 +149,6 @@ Deploy-Staging:
   stage: deploy
   image: alpine:latest
   before_script:
-    - cat "$SSH_KEY_STAGING"
     - chmod 400 "$SSH_KEY_STAGING"
     - apk update && apk add openssh-client
   script:
@@ -170,11 +170,12 @@ Deploy-Production:
     - chmod 400 $SSH_KEY_PROD
     - apk update && apk add openssh-client
   script:
-    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PROD $GCP_USERNAME_PROD@$GCP_STATIC_IP_PROD "
+    - ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_PROD" $GCP_USERNAME_PROD@$GCP_STATIC_IP_PROD "
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
       docker run --name $CONTAINER_NAME -d -p 8000:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
   tags:
     - runner-randi
   only:
-    - master
+    - main
+    - ci-cd
