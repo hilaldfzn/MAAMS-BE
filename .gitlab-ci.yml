@@ -165,8 +165,6 @@ Deploy-Production:
   stage: deploy
   image: alpine:latest
   before_script:
-    - echo $SSH_KEY_PROD
-    - cat $SSH_KEY_PROD
     - chmod 400 $SSH_KEY_PROD
     - apk update && apk add openssh-client
   script:
