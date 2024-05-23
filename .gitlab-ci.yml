@@ -107,7 +107,6 @@ Build-Staging:
     - dind
   only:
     - staging
-    - ci-cd
 
 
 Build-Production:
@@ -160,7 +159,6 @@ Deploy-Staging:
     - runner-randi
   only:
     - staging
-    - ci-cd
 
 
 Deploy-Production:
