@@ -11,9 +11,13 @@ from validator.exceptions import NotFoundRequestException, ForbiddenRequestExcep
 from validator.constants import ErrorMsg
 import uuid
 import requests
+from validator.enums import (
+    ValidationType
+)
+from validator.constants import FeedbackMsg
 
 class CausesService:
-    def api_call(self, system_message: str, user_prompt: str) -> str:
+    def api_call(self, system_message: str, user_prompt: str, validation_type:ValidationType):
         client = Groq(api_key=settings.GROQ_API_KEY)
         
         try:
@@ -29,17 +33,27 @@ class CausesService:
                     }
                 ],
                 model="llama3-8b-8192",
-                max_tokens=5
+                temperature=0.1,
+                max_tokens=50
             )
             
             answer = chat_completion.choices[0].message.content
+        
         except requests.exceptions.RequestException:
             raise AIServiceErrorException(ErrorMsg.AI_SERVICE_ERROR)
         
-        if answer.strip().lower().__contains__('true'):
-            return True
-        elif answer.strip().lower().__contains__('false'):
-            return False
+        if validation_type in [ValidationType.NORMAL, ValidationType.ROOT]:
+            if answer.lower().__contains__('true'):
+                return True
+            elif answer.lower().__contains__('false'):
+                return False
+        else:
+            if answer.__contains__('1'):
+                return 1
+            elif answer.__contains__('2'):
+                return 2
+            elif answer.__contains__('3'):  
+                return 3
     
     def validate(self, question_id: uuid):
         max_row = Causes.objects.filter(problem_id=question_id).order_by('-row').values_list('row', flat=True).first()
@@ -51,6 +65,7 @@ class CausesService:
                 continue
             
             user_prompt = ""
+            prev_cause = None
             system_message = "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem."
             
             if max_row == 1:
@@ -60,21 +75,70 @@ class CausesService:
                 prev_cause = Causes.objects.filter(problem_id=question_id, row=max_row-1, column=cause.column).first()
                 user_prompt = f"Is '{cause.cause}' the cause of '{prev_cause.cause}'? Answer only with True/False"
                 
-            if self.api_call(self=self, system_message=system_message, user_prompt=user_prompt):
+            if self.api_call(self=self, system_message=system_message, user_prompt=user_prompt, validation_type=ValidationType.NORMAL):
                 cause.status = True
-                if max_row > 1 and CausesService.validate_root(self=self, cause=cause, problem=problem):
-                    cause.root_status = True
-                
-                cause.save()
+                cause.feedback = ""
+                if max_row > 1:
+                    CausesService.check_root_cause(self=self, cause=cause, problem=problem)
 
-    def validate_root(self, cause: Causes, problem: question.Question):
+            else:
+                CausesService.retrieve_feedback(self=self, cause=cause, problem=problem, prev_cause = prev_cause)
+            
+            cause.save()
+    
+    def check_root_cause(self, cause: Causes, problem: question.Question):
         root_check_user_prompt = f"Is '{cause.cause}' a root cause of {problem.question}? Answer only with True/False."
         root_check_system_message = "You are an AI model. You are asked to determine whether the given cause is a root cause of the given problem."
         
-        if CausesService.api_call(self=self, system_message=root_check_system_message, user_prompt=root_check_user_prompt):
+        if CausesService.api_call(self=self, system_message=root_check_system_message, user_prompt=root_check_user_prompt, validation_type=ValidationType.ROOT):
             cause.root_status = True
-            cause.save()
+    
+    def retrieve_feedback(self, cause: Causes, problem: question.Question, prev_cause: None|Causes):
+        retrieve_feedback_user_prompt = ""
+        retrieve_feedback_system_message = ""
         
+        if prev_cause is None:
+            retrieve_feedback_user_prompt = (
+                f"'{cause.cause}' is the FALSE cause for this question '{problem.question}'. "
+                "Now determine if it is false because it is NOT THE CAUSE or because it is a POSITIVE OR NEUTRAL CAUSE. "
+                "Answer ONLY with '1' if it is NOT THE CAUSE, '2' if it is POSITIVE OR NEUTRAL."
+            )
+            retrieve_feedback_system_message = (
+                "You are an AI model. You are asked to determine the relationship between problem and cause. "
+                "Please respond ONLY WITH '1' if the cause is NOT THE CAUSE of the question, ONLY WITH '2' if the cause is positive or neutral"
+            )
+            
+            feedback_type = CausesService.api_call(self=self, system_message=retrieve_feedback_system_message, user_prompt=retrieve_feedback_user_prompt, validation_type=ValidationType.FALSE)
+            
+            if feedback_type == 1:
+                cause.feedback = FeedbackMsg.FALSE_ROW_1_NOT_CAUSE.format(column='ABCDE'[cause.column])
+            elif feedback_type == 2:
+                cause.feedback = FeedbackMsg.FALSE_ROW_N_POSITIVE_NEUTRAL.format(column='ABCDE'[cause.column], row=cause.row)     
+                
+        else:
+            retrieve_feedback_user_prompt = (
+                f"'{cause.cause}' is the FALSE cause for '{prev_cause.cause}'. "
+                "Now determine if it is false because it is NOT THE CAUSE, because it is a POSITIVE OR NEUTRAL cause, or because it is SIMILAR TO THE PREVIOUS cause. "
+                "Answer ONLY WITH '1' if it is NOT THE CAUSE,  "
+                "ONLY WITH '2' if it is POSITIVE OR NEUTRAL, or "
+                "ONLY WITH '3' if it is SIMILAR TO THE PREVIOUS cause."
+            )
+            retrieve_feedback_system_message = (
+                "You are an AI model. You are asked to determine the relationship between the given causes. "
+                "Please respond ONLY WITH '1' if the cause is NOT THE CAUSE of the previous cause, "
+                "ONLY WITH '2' if the cause is POSITIVE OR NEUTRAL, or "
+                "ONLY WITH '3' if the cause is SIMILAR TO THE PREVIOUS cause."
+            )
+        
+            feedback_type = CausesService.api_call(self=self, system_message=retrieve_feedback_system_message, user_prompt=retrieve_feedback_user_prompt, validation_type=ValidationType.FALSE)
+            
+            if feedback_type == 1:
+                cause.feedback = FeedbackMsg.FALSE_ROW_N_NOT_CAUSE.format(column='ABCDE'[cause.column], row=cause.row, prev_row=cause.row-1)
+            elif feedback_type == 2:
+                cause.feedback = FeedbackMsg.FALSE_ROW_N_POSITIVE_NEUTRAL.format(column='ABCDE'[cause.column], row=cause.row)     
+            elif feedback_type == 3:
+                cause.feedback = FeedbackMsg.FALSE_ROW_N_SIMILAR_PREVIOUS.format(column='ABCDE'[cause.column], row=cause.row) 
+               
     def create(self, question_id: uuid, cause: str, row: int, column: int, mode: str) -> CreateCauseDataClass:
         cause = Causes.objects.create(
             problem=question.Question.objects.get(pk=question_id),
@@ -91,7 +155,8 @@ class CausesService:
             mode=cause.mode,
             cause=cause.cause,
             status=cause.status,
-            root_status=cause.root_status
+            root_status=cause.root_status,
+            feedback = cause.feedback
         )
 
     def get(self, user: CustomUser, question_id: uuid, pk: uuid) -> CreateCauseDataClass:
@@ -115,7 +180,8 @@ class CausesService:
             mode=cause.mode,
             cause=cause.cause,
             status=cause.status,
-            root_status=cause.root_status
+            root_status=cause.root_status,
+            feedback = cause.feedback
         )
 
     def get_list(self, user: CustomUser, question_id: uuid) -> List[CreateCauseDataClass]:
@@ -141,7 +207,8 @@ class CausesService:
                 mode=cause.mode,
                 cause=cause.cause,
                 status=cause.status,
-                root_status=cause.root_status
+                root_status=cause.root_status,
+                feedback = cause.feedback
             )
             for cause in cause
         ]
@@ -165,6 +232,7 @@ class CausesService:
             mode=causes.mode,
             cause=causes.cause,
             status=causes.status,
-            root_status=causes.root_status
+            root_status=causes.root_status,
+            feedback = causes.feedback
         )
         
