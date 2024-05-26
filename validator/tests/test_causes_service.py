@@ -15,16 +15,16 @@ class CausesServiceTest(TestCase):
     def test_api_call_positive(self, mock_groq):
         mock_client = Mock()
         mock_chat_completion = Mock()
-        mock_chat_completion.choices = [Mock(message=Mock(content='True'))]
+        mock_chat_completion.choices = [Mock(message=Mock(content='true'))]
         mock_client.chat.completions.create.return_value = mock_chat_completion
         mock_groq.return_value = mock_client
 
         service = CausesService()
         system_message = "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem."
-        user_prompt = "Is 'Example cause' the cause of 'Example problem'? Answer using only True/False"
+        user_prompt = "Is 'Example cause' the cause of 'Example problem'? Answer only with True/False"
         response = service.api_call(system_message, user_prompt, ValidationType.NORMAL)
 
-        self.assertTrue(response)
+        self.assertEqual(response, 1)
         mock_client.chat.completions.create.assert_called_once_with(
             messages=[
                 {
@@ -37,7 +37,7 @@ class CausesServiceTest(TestCase):
                 }
             ],
             model="llama3-8b-8192",
-            temperature=0.2,
+            temperature=0.1,
             max_tokens=50,
             seed=42
         )
@@ -46,16 +46,16 @@ class CausesServiceTest(TestCase):
     def test_api_call_returns_false(self, mock_groq):
         mock_client = Mock()
         mock_chat_completion = Mock()
-        mock_chat_completion.choices = [Mock(message=Mock(content='False'))]
+        mock_chat_completion.choices = [Mock(message=Mock(content='false'))]
         mock_client.chat.completions.create.return_value = mock_chat_completion
         mock_groq.return_value = mock_client
 
         service = CausesService()
         system_message = "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem."
-        user_prompt = "Is 'Example cause' the cause of 'Example problem'? Answer using only True/False"
+        user_prompt = "Is 'Example cause' the cause of 'Example problem'? Answer only with True/False"
         response = service.api_call(system_message, user_prompt, ValidationType.NORMAL)
 
-        self.assertFalse(response)
+        self.assertEqual(response, 0)
         mock_client.chat.completions.create.assert_called_once_with(
             messages=[
                 {
@@ -68,7 +68,7 @@ class CausesServiceTest(TestCase):
                 }
             ],
             model="llama3-8b-8192",
-            temperature=0.2,
+            temperature=0.1,
             max_tokens=50,
             seed=42
         )
@@ -81,7 +81,7 @@ class CausesServiceTest(TestCase):
 
         service = CausesService()
         system_message = "You are an AI model. You are asked to determine whether the given cause is the cause of the given problem."
-        user_prompt = "Is 'Example cause' the cause of 'Example problem'? Answer using only True/False"
+        user_prompt = "Is 'Example cause' the cause of 'Example problem'? Answer only with True/False"
 
         with self.assertRaises(AIServiceErrorException) as context:
             service.api_call(system_message, user_prompt, ValidationType.NORMAL)
@@ -98,7 +98,7 @@ class CausesServiceTest(TestCase):
                 }
             ],
             model="llama3-8b-8192",
-            temperature=0.2,
+            temperature=0.1,
             max_tokens=50,
             seed=42
         )
@@ -135,7 +135,7 @@ class CausesServiceTest(TestCase):
         cause1 = Causes.objects.create(problem=question, row=1, column=1, mode='PRIBADI', cause='Cause 1')
         cause2 = Causes.objects.create(problem=question, row=1, column=2, mode='PRIBADI', cause='Cause 2')
 
-        with patch.object(CausesService, 'api_call', return_value=True):
+        with patch.object(CausesService, 'api_call', return_value=1):
             service = CausesService()
             service.validate(question_id)
 
@@ -151,7 +151,7 @@ class CausesServiceTest(TestCase):
         Causes.objects.create(problem=question, row=1, column=1, mode='PRIBADI', cause='Cause 1', status=True)
         cause2 = Causes.objects.create(problem=question, row=2, column=1, mode='PRIBADI', cause='Cause 2')
 
-        with patch.object(CausesService, 'api_call', return_value=True):
+        with patch.object(CausesService, 'api_call', return_value=1):
             service = CausesService()
             service.validate(question_id)
 
@@ -162,7 +162,7 @@ class CausesServiceTest(TestCase):
     def test_check_root_cause(self, mock_groq):
         mock_client = Mock()
         mock_chat_completion = Mock()
-        mock_chat_completion.choices = [Mock(message=Mock(content='True'))]
+        mock_chat_completion.choices = [Mock(message=Mock(content='true'))]
         mock_client.chat.completions.create.return_value = mock_chat_completion
         mock_groq.return_value = mock_client
 
@@ -218,7 +218,7 @@ class CausesServiceTest(TestCase):
 
         service.retrieve_feedback(cause, problem, prev_cause)
         self.assertEqual(cause.feedback, FeedbackMsg.FALSE_ROW_N_NOT_CAUSE.format(column='B', row=2, prev_row=1))
-      
+
     @patch('validator.services.causes.Groq')
     def test_retrieve_feedback_positive_neutral_n_row(self, mock_groq):
         mock_client = Mock()

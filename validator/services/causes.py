@@ -17,7 +17,7 @@ from validator.enums import (
 from validator.constants import FeedbackMsg
 
 class CausesService:
-    def api_call(self, system_message: str, user_prompt: str, validation_type:ValidationType):
+    def api_call(self, system_message: str, user_prompt: str, validation_type:ValidationType) -> int:
         client = Groq(api_key=settings.GROQ_API_KEY)
         
         try:
@@ -33,7 +33,7 @@ class CausesService:
                     }
                 ],
                 model="llama3-8b-8192",
-                temperature=0.2,
+                temperature=0.1,
                 max_tokens=50,
                 seed=42
             )
@@ -45,9 +45,9 @@ class CausesService:
         
         if validation_type in [ValidationType.NORMAL, ValidationType.ROOT]:
             if answer.lower().__contains__('true'):
-                return True
+                return 1
             elif answer.lower().__contains__('false'):
-                return False
+                return 0
         else:
             if answer.__contains__('1'):
                 return 1
@@ -76,7 +76,7 @@ class CausesService:
                 prev_cause = Causes.objects.filter(problem_id=question_id, row=max_row-1, column=cause.column).first()
                 user_prompt = f"Is '{cause.cause}' the cause of '{prev_cause.cause}'? Answer only with True/False"
                 
-            if self.api_call(self=self, system_message=system_message, user_prompt=user_prompt, validation_type=ValidationType.NORMAL):
+            if self.api_call(self=self, system_message=system_message, user_prompt=user_prompt, validation_type=ValidationType.NORMAL) == 1:
                 cause.status = True
                 cause.feedback = ""
                 if max_row > 1:
@@ -88,10 +88,15 @@ class CausesService:
             cause.save()
     
     def check_root_cause(self, cause: Causes, problem: question.Question):
-        root_check_user_prompt = f"Is '{cause.cause}' a root cause of {problem.question}? Answer only with True/False."
-        root_check_system_message = "You are an AI model. You are asked to determine whether the given cause is a root cause of the given problem."
+        root_check_user_prompt = f"Is the cause '{cause.cause}' the fundamental reason behind the problem '{problem.question}'? Answer only with True or False."
+        root_check_system_message = (
+            "You are an AI model. You are asked to determine whether the given cause is a root cause of the given problem. "
+            "A root cause is the fundamental underlying reason for a problem, which, if addressed, would prevent recurrence of the problem. "
+            "Not all direct causes are root causes; while direct causes contribute to the problem, root causes are the deepest level of causation. "
+            "Your task is to distinguish between direct causes and root causes, identifying whether the given cause is indeed the fundamental issue driving the problem."
+        )
         
-        if CausesService.api_call(self=self, system_message=root_check_system_message, user_prompt=root_check_user_prompt, validation_type=ValidationType.ROOT):
+        if CausesService.api_call(self=self, system_message=root_check_system_message, user_prompt=root_check_user_prompt, validation_type=ValidationType.ROOT) == 1:
             cause.root_status = True
     
     def retrieve_feedback(self, cause: Causes, problem: question.Question, prev_cause: None|Causes):
