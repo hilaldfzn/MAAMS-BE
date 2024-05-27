@@ -11,6 +11,58 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import sentry_sdk
+
+# Setup environment variables.
+# Production & staging environment variables will be stored on Dockerfile
+# and will be populated through pipeline using CI/CD variables as args.
+import os
+from dotenv import load_dotenv, find_dotenv
+from django.core.exceptions import ImproperlyConfigured
+
+# Load current environment if .env file exists
+env_file = find_dotenv(
+     filename=".env",
+     raise_error_if_not_found=False,
+     usecwd=False
+)
+if env_file:
+    load_dotenv(env_file, verbose=True)
+active_env = str(os.environ["ENVIRONMENT"])
+# If a new environment is added,
+# check here to load .env file if file is present.
+if active_env == 'DEVELOPMENT' or active_env == 'LOCAL':
+    load_dotenv('./.env.dev')
+elif active_env == 'TESTING':
+    load_dotenv('./.env.test')
+ 
+def get_env_value(env_variable: str) -> str | int | bool | None:
+    """
+    Gets environment variables depending on active environment.
+    """
+    try:
+        value = parse_env_value(env_variable, os.environ[env_variable])
+        return value
+    except KeyError:
+        error_msg = f'{env_variable} environment variable not set.'
+        raise ImproperlyConfigured(error_msg)
+
+def parse_env_value(key: str, value: str) -> str | bool | int | None:
+    """
+    Parses environment variable into either bool, strings, ints, or None type.
+    """
+    case_sensitive_keys = ["GROQ_API_KEY"]
+    
+    if key not in case_sensitive_keys:
+        value = value.lower()
+        
+    if value == "none": return None             # Checks for None type
+    if value in ["0", "false"]: return False    # Checks for bool types
+    if value in ["1", "true"]: return True
+    if value.isnumeric(): return int(value)     # Checks for int types
+    # Return string if none of the above type matches
+    return value                                
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +72,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+x7a#te49@!xq3*j!y(r#di0ig)0v-_g33&qoro@kfpx#tehdm'
+SECRET_KEY = get_env_value("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = get_env_value("DEBUG")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = get_env_value("ALLOWED_HOSTS").split(",")
+
+# accomodate sentry headers for front-end service
+from corsheaders.defaults import default_headers
+CORS_ALLOW_HEADERS = [*default_headers, "baggage", "sentry-trace"]
+
+CORS_ALLOWED_ORIGINS = [
+    get_env_value("HOST_FE"),  # Add the origin of your frontend application
+]
 
 
 # Application definition
@@ -37,17 +97,53 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
+    'rest_framework',
+    'drf_spectacular',
+    'access_token',
+    'authentication',
+    'validator',
 ]
+
+# Django REST Framework configurations
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5,
+}
+
+# JWT access token properties
+# https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    'USER_ID_FIELD': 'uuid',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# DRF-Spectacular configurations, OpenAPI3 schema generator
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MAAMS-BE',
+    'DESCRIPTION': 'Backend API documentation for MAAMS.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 ROOT_URLCONF = 'maams_be.urls'
 
@@ -69,17 +165,45 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'maams_be.wsgi.application'
 
+# Logging
+# https://stackoverflow.com/a/21993077/16568197
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+    },
+}
+
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': get_env_value("DB_NAME"),
+        'USER': get_env_value("DB_USER"),
+        'PASSWORD': get_env_value("DB_PASSWORD"),
+        'HOST': get_env_value("DB_HOST"),
+        'PORT': get_env_value("DB_PORT"),
     }
 }
 
+# Set default auth model to Custom User
+AUTH_USER_MODEL = 'authentication.CustomUser'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -121,3 +245,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+GROQ_API_KEY = get_env_value("GROQ_API_KEY")
+
+# Sentry
+if active_env == "DEVELOPMENT":
+    sentry_sdk.init(
+        dsn=get_env_value("SENTRY_DSN"),
+        traces_sample_rate=1.0,
+    )

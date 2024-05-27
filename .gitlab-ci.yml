@@ -1,0 +1,179 @@
+default:
+  cache:                                            # Pip's cache doesn't store the python packages
+    paths:                                          # https://pip.pypa.io/en/stable/topics/caching/
+      - $(pwd)/.cache/pip
+
+variables:
+  ALLOWED_HOSTS: $ALLOWED_HOSTS
+  PRODUCTION: $PRODUCTION
+  STAGING: $STAGING
+  SECRET_KEY: $SECRET_KEY
+  REGISTRY_USER: $REGISTRY_USER
+  CONTAINER_NAME: $CONTAINER_NAME
+  IMAGE_NAME: $IMAGE_NAME
+  IMAGE_TAG: $IMAGE_TAG
+  GCP_USERNAME_PROD: $GCP_USERNAME_PROD
+  GCP_STATIC_IP_PROD: $GCP_STATIC_IP_PROD
+  GCP_USERNAME_STAGING: $GCP_USERNAME_STAGING
+  GCP_STATIC_IP_STAGING: $GCP_STATIC_IP_STAGING
+  DB_HOST_STAGING: $DB_HOST_STAGING
+  DB_NAME_STAGING: $DB_NAME_STAGING
+  DB_PORT_STAGING: $DB_PORT_STAGING
+  DB_USER_STAGING: $DB_USER_STAGING
+  DB_PASSWORD_STAGING: $DB_PASSWORD_STAGING
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: maams-experimental
+  POSTGRES_HOST_AUTH_METHOD: trust
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  
+  GIT_DEPTH: "0"
+  WORKDIR: "/app"
+  HOST_FE: $HOST_FE
+  OPENAI_API_KEY: $OPENAI_API_KEY
+
+stages:
+  - test
+  - build
+  - sonarcloud-check
+  - deploy
+
+  
+Test:
+  stage: test
+  image: python:3.10-slim
+  services:
+    - name: postgres:latest
+      alias: postgres
+  before_script:
+    - python -V                                                         # Print out python version for debugging
+    - echo "Creating virtual environment for the project..."
+    - ls -al
+    - pip install virtualenv
+    - virtualenv venv
+    - echo "Activating virtual environment..."
+    - source venv/bin/activate
+    - echo "Virtual environment activated."
+    - echo $(pwd)
+    - cat "$ENV_TEST" >> .env
+    - cat "$ENV_TEST_VAR" >> .env.test
+    - cat .env
+    - cat .env.test
+    - echo "Starting test job..." 
+  script:
+    - echo "Installing requirements..."
+    - pip install -r requirements.txt
+    - ls -a
+    - echo "Running unit tests..."
+    - coverage run manage.py test                                          # Run tests
+    - echo "Exporting results to htmlcov/coverage.html..."
+    - coverage html                                                     # Export result to html
+    - echo "Coverage exported. Total coverage:"
+    - grep -oP '<span class="pc_cov">\K[^<]+%' ./htmlcov/index.html
+    - coverage report
+    - coverage xml
+    - sleep 5
+    - deactivate
+    - ls -a
+    - echo "All tests successfully ran."
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    paths:
+      - coverage.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+  tags:
+    - runner-randi
+
+Build-Staging:
+  stage: build
+  image: docker
+  services:
+    - docker:dind
+  variables:
+    CI_DEBUG_TRACE: "true"
+  before_script:
+    - echo "Building image..."
+  script:
+    - ls -a
+    - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
+    - docker build --build-arg ENVIRONMENT=$STAGING --build-arg ALLOWED_HOSTS=$ALLOWED_HOSTS --build-arg SECRET_KEY=$SECRET_KEY --build-arg DEBUG=True --build-arg DB_HOST=$DB_HOST_STAGING --build-arg DB_NAME=$DB_NAME_STAGING --build-arg DB_PORT=$DB_PORT_STAGING --build-arg DB_USER=$DB_USER_STAGING --build-arg DB_PASSWORD=$DB_PASSWORD_STAGING --build-arg HOST_FE=$HOST_FE --build-arg GROQ_API_KEY=$GROQ_API_KEY --build-arg SENTRY_DSN=$SENTRY_DSN -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
+    - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
+  tags:
+    - dind
+  only:
+    - staging
+
+
+Build-Production:
+  stage: build
+  image: docker
+  services:
+    - docker:dind
+  variables:
+    CI_DEBUG_TRACE: "true"
+  before_script:
+    - echo "Building image..."
+  script:
+    - ls -a
+    - echo $DOCKER_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
+    - docker build --build-arg ENVIRONMENT=$PRODUCTION --build-arg ALLOWED_HOSTS=$ALLOWED_HOSTS --build-arg SECRET_KEY=$SECRET_KEY --build-arg DEBUG=False --build-arg DB_HOST=$DB_HOST_PROD --build-arg DB_NAME=$DB_NAME_PROD --build-arg DB_PORT=$DB_PORT_PROD --build-arg DB_USER=$DB_USER_PROD --build-arg DB_PASSWORD=$DB_PASSWORD_PROD --build-arg HOST_FE=$HOST_FE --build-arg GROQ_API_KEY=$GROQ_API_KEY --build-arg SENTRY_DSN=$SENTRY_DSN -t $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG .
+    - docker push $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG
+  tags:
+    - dind
+  only:
+    - main
+    - ci-cd
+
+
+Sonarcloud-Check:
+  stage: sonarcloud-check
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  tags:
+    - runner-randi
+
+Deploy-Staging:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - chmod 400 "$SSH_KEY_STAGING"
+    - apk update && apk add openssh-client
+  script:
+    - ssh -v -o StrictHostKeyChecking=no -i "$SSH_KEY_STAGING" $GCP_USERNAME_STAGING@$GCP_STATIC_IP_STAGING "
+      docker container rm -f $CONTAINER_NAME || true &&
+      docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
+      docker run --name $CONTAINER_NAME -d -p 8000:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
+  tags:
+    - runner-randi
+  only:
+    - staging
+
+
+Deploy-Production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - chmod 400 $SSH_KEY_PROD
+    - apk update && apk add openssh-client
+  script:
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PROD $GCP_USERNAME_PROD@$GCP_STATIC_IP_PROD "
+      docker container rm -f $CONTAINER_NAME || true &&
+      docker image rm -f $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG || true &&
+      docker run --name $CONTAINER_NAME -d -p 8000:8000 $REGISTRY_USER/$IMAGE_NAME:$IMAGE_TAG"
+  tags:
+    - runner-randi
+  only:
+    - main
+    - ci-cd
