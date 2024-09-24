@@ -115,13 +115,13 @@ class CausesService:
             korupsi_category = CausesService.api_call(self=self, system_message=korupsi_check_system_message, user_prompt=korupsi_check_user_prompt, validation_type=ValidationType.ROOT_TYPE)
             
             if korupsi_category == 1:
-                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} dan merupakan Korupsi Harta."
+                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} Korupsi Harta."
             elif korupsi_category == 2:
-                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} dan merupakan Korupsi Tahta."
+                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} Korupsi Tahta."
             elif korupsi_category == 3:
-                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} dan merupakan Korupsi Cinta."
+                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} Korupsi Cinta."
             else:
-                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} dan merupakan Korupsi Harta."
+                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} Korupsi Harta."
             
             cause.save()
                 

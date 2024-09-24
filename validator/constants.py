@@ -15,7 +15,7 @@ class ErrorMsg:
     
 class FeedbackMsg:
     # Root Cause Messages
-    ROOT_FOUND = "Akar masalah kolom {column} ditemukan"
+    ROOT_FOUND = "Akar masalah kolom {column} adalah"
 
     # False Messages
     FALSE_ROW_1_NOT_CAUSE = "Sebab {column}1 bukan merupakan sebab dari pertanyaan"
