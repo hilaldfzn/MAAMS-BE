@@ -36,7 +36,7 @@ class CausesServiceTest(TestCase):
                     "content": user_prompt
                 }
             ],
-            model="llama3-8b-8192",
+            model="llama-3.1-70b-versatile",
             temperature=0.1,
             max_tokens=50,
             seed=42
@@ -67,7 +67,7 @@ class CausesServiceTest(TestCase):
                     "content": user_prompt
                 }
             ],
-            model="llama3-8b-8192",
+            model="llama-3.1-70b-versatile",
             temperature=0.1,
             max_tokens=50,
             seed=42
@@ -97,7 +97,7 @@ class CausesServiceTest(TestCase):
                     "content": user_prompt
                 }
             ],
-            model="llama3-8b-8192",
+            model="llama-3.1-70b-versatile",
             temperature=0.1,
             max_tokens=50,
             seed=42
@@ -158,20 +158,29 @@ class CausesServiceTest(TestCase):
         cause2.refresh_from_db()
         self.assertTrue(cause2.status)
 
+    def setUp(self):
+        self.problem = Question.objects.create(question="Test problem")
+
     @patch('validator.services.causes.Groq')
-    def test_check_root_cause(self, mock_groq):
+    def test_check_root_cause_with_corruption_category(self, mock_groq):
         mock_client = Mock()
         mock_chat_completion = Mock()
-        mock_chat_completion.choices = [Mock(message=Mock(content='true'))]
-        mock_client.chat.completions.create.return_value = mock_chat_completion
+        mock_chat_completion.choices = [
+            Mock(message=Mock(content='true')), 
+            Mock(message=Mock(content='1'))     
+        ]
+
+        mock_client.chat.completions.create.side_effect = [mock_chat_completion, mock_chat_completion]
         mock_groq.return_value = mock_client
 
         service = CausesService()
-        cause = Causes(problem_id=uuid.uuid4(), cause="Root Cause", row=1, column=1)
-        problem = Question(question="Test problem")
+        cause = Causes(problem_id=self.problem.id, cause="Root Cause", row=1, column=1)
 
-        service.check_root_cause(cause, problem)
-        self.assertTrue(cause.root_status)
+        service.check_root_cause(cause, self.problem)
+        self.assertTrue(cause.root_status, "The root_status should be True if the cause is identified as a root cause.")
+
+        expected_feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='B')} Korupsi Harta."
+        self.assertEqual(cause.feedback, expected_feedback, "The feedback should indicate the correct corruption category.")
 
     @patch('validator.services.causes.Groq')
     def test_retrieve_feedback_not_cause_1_row(self, mock_groq):
