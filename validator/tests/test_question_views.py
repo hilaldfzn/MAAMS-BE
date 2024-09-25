@@ -473,10 +473,10 @@ class QuestionViewTest(APITestCase):
         Question.objects.all().delete()
         url_post = reverse(self.post_url)
         response__old_post = self.client.post(url_post, self.valid_data, format='json')
-        old_post_id = Question.objects.get(id=response__old_post.data['id']).id
+        old_post_id = response__old_post.data['id']
         
         response__new_post = self.client.post(url_post, self.valid_data, format='json')
-        new_post_id = Question.objects.get(id=response__new_post.data['id']).id
+        new_post_id = response__new_post.data['id']
         
         url_recent = reverse(self.get_recent)
         response_recent = self.client.get(url_recent)

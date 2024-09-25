@@ -32,7 +32,7 @@ class CausesService:
                         "content": user_prompt
                     }
                 ],
-                model="llama3-8b-8192",
+                model="llama-3.1-70b-versatile",
                 temperature=0.1,
                 max_tokens=50,
                 seed=42
@@ -99,6 +99,32 @@ class CausesService:
         if CausesService.api_call(self=self, system_message=root_check_system_message, user_prompt=root_check_user_prompt, validation_type=ValidationType.ROOT) == 1:
             cause.root_status = True
     
+            korupsi_check_user_prompt = (
+                f"Please categorize the root cause '{cause.cause}' into one of the following corruption categories: "
+                "'Harta' (corruption of wealth), 'Tahta' (corruption of power), or 'Cinta' (corruption of love). "
+                "Answer ONLY with '1' for Harta, '2' for Tahta, or '3' for Cinta."
+            )
+
+            korupsi_check_system_message = (
+                "You are an AI model. Your task is to categorize the root cause into one of three corruption categories: "
+                "'Harta' for corruption of wealth, 'Tahta' for corruption of power, or 'Cinta' for corruption of love. "
+                "You must choose one of these categories, even if the fit seems partial. "
+                "Answer ONLY with '1' for Harta, '2' for Tahta, or '3' for Cinta."
+            )
+            
+            korupsi_category = CausesService.api_call(self=self, system_message=korupsi_check_system_message, user_prompt=korupsi_check_user_prompt, validation_type=ValidationType.ROOT_TYPE)
+            
+            if korupsi_category == 1:
+                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} Korupsi Harta."
+            elif korupsi_category == 2:
+                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} Korupsi Tahta."
+            elif korupsi_category == 3:
+                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} Korupsi Cinta."
+            else:
+                cause.feedback = f"{FeedbackMsg.ROOT_FOUND.format(column='ABCDE'[cause.column])} Korupsi Harta."
+            
+            cause.save()
+                
     def retrieve_feedback(self, cause: Causes, problem: question.Question, prev_cause: None|Causes):
         retrieve_feedback_user_prompt = ""
         retrieve_feedback_system_message = ""
