@@ -136,6 +136,9 @@ Sonarcloud-Check:
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
+  before_script:
+    - mkdir -p /builds/maams-ppl/maams-be.tmp
+    - chmod 777 /builds/maams-ppl/maams-be.tmp
   cache:
     key: "${CI_JOB_NAME}"
     paths:
