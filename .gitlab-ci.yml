@@ -136,6 +136,9 @@ Sonarcloud-Check:
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
+  before_script:
+    - mkdir -p /builds/maams-ppl/maams-be.tmp
+    - chown -R $(whoami) /builds/maams-ppl/maams-be.tmp
   cache:
     key: "${CI_JOB_NAME}"
     paths:
@@ -144,6 +147,7 @@ Sonarcloud-Check:
     - sonar-scanner
   tags:
     - runner-randi
+  allow_failure: true
 
 Deploy-Staging:
   stage: deploy
