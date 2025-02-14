@@ -73,6 +73,8 @@ jobs:
         run: |
           source .venv/bin/activate
           coverage html
+      - name: Debug: List files
+        run: ls -laR
       - name: Run SonarCloud analysis
         uses: sonarsource/sonarcloud-github-action@master
         env:
