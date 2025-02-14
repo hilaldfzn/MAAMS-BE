@@ -85,6 +85,7 @@ jobs:
                 -Dsonar.sources=.
                 -Dsonar.tests=tests
                 -Dsonar.python.coverage.reportPaths=htmlcov/coverage.xml
+                -Dsonar.host.url=https://sonarcloud.io
       - name: Upload coverage report artifact (optional)
         uses: actions/upload-artifact@v4
         if: always()
