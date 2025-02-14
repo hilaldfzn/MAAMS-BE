@@ -19,15 +19,13 @@ try:
     # Create a cursor to perform database operations
     connection.autocommit = True
     cursor = connection.cursor()
-except (Exception, Error) as error:
+except Exception as error:
     print("Error while connecting to PostgreSQL", error)
 
 def map_cursor(cursor):
     '''
     Return all rows from a cursor as a namedtuple
     '''
-    desc = cursor.description
-    nt_result = namedtuple("Result", [col[0] for col in desc])
     return [dict(row) for row in cursor.fetchall()]
 
 
