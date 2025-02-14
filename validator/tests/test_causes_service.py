@@ -36,7 +36,7 @@ class CausesServiceTest(TestCase):
                     "content": user_prompt
                 }
             ],
-            model="llama-3.1-70b-versatile",
+            model="llama-3.3-70b-specdec",
             temperature=0.1,
             max_tokens=50,
             seed=42
@@ -67,7 +67,7 @@ class CausesServiceTest(TestCase):
                     "content": user_prompt
                 }
             ],
-            model="llama-3.1-70b-versatile",
+            model="llama-3.3-70b-specdec",
             temperature=0.1,
             max_tokens=50,
             seed=42
@@ -97,7 +97,7 @@ class CausesServiceTest(TestCase):
                     "content": user_prompt
                 }
             ],
-            model="llama-3.1-70b-versatile",
+            model="llama-3.3-70b-specdec",
             temperature=0.1,
             max_tokens=50,
             seed=42

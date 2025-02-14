@@ -29,6 +29,7 @@ env_file = find_dotenv(
 if env_file:
     load_dotenv(env_file, verbose=True)
 active_env = str(os.environ["ENVIRONMENT"])
+
 # If a new environment is added,
 # check here to load .env file if file is present.
 if active_env == 'DEVELOPMENT' or active_env == 'LOCAL':
@@ -72,19 +73,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_env_value("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_env_value("DEBUG")
+DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = get_env_value("ALLOWED_HOSTS").split(",")
+ALLOWED_HOSTS = ['*']
 
 # accomodate sentry headers for front-end service
 from corsheaders.defaults import default_headers
 CORS_ALLOW_HEADERS = [*default_headers, "baggage", "sentry-trace"]
 
 CORS_ALLOWED_ORIGINS = [
-    get_env_value("HOST_FE"),  # Add the origin of your frontend application
+    os.getenv("HOST_FE"),  # Add the origin of your frontend application
 ]
 
 
@@ -194,11 +195,11 @@ LOGGING = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': get_env_value("DB_NAME"),
-        'USER': get_env_value("DB_USER"),
-        'PASSWORD': get_env_value("DB_PASSWORD"),
-        'HOST': get_env_value("DB_HOST"),
-        'PORT': get_env_value("DB_PORT"),
+        'NAME': os.getenv("DB_NAME"),
+        'USER': os.getenv("DB_USER"),
+        'PASSWORD': os.getenv("DB_PASSWORD"),
+        'HOST': os.getenv("DB_HOST"),
+        'PORT': os.getenv("DB_PORT"),
     }
 }
 
@@ -246,11 +247,11 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-GROQ_API_KEY = get_env_value("GROQ_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Sentry
 if active_env == "DEVELOPMENT":
     sentry_sdk.init(
-        dsn=get_env_value("SENTRY_DSN"),
+        dsn=os.getenv("SENTRY_DSN"),
         traces_sample_rate=1.0,
     )

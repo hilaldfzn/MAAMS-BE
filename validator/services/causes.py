@@ -1,20 +1,18 @@
-from typing import List
+import uuid
+import requests
 from groq import Groq
+from typing import List
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from authentication.models import CustomUser
-from validator.dataclasses.create_cause import CreateCauseDataClass
 from validator.models import question
-from validator.models.causes import Causes
 from validator.services import question
-from validator.exceptions import NotFoundRequestException, ForbiddenRequestException, AIServiceErrorException
 from validator.constants import ErrorMsg
-import uuid
-import requests
-from validator.enums import (
-    ValidationType
-)
+from validator.models.causes import Causes
+from validator.enums import ValidationType
 from validator.constants import FeedbackMsg
+from validator.dataclasses.create_cause import CreateCauseDataClass
+from validator.exceptions import NotFoundRequestException, ForbiddenRequestException, AIServiceErrorException
 
 class CausesService:
     def api_call(self, system_message: str, user_prompt: str, validation_type:ValidationType) -> int:
@@ -32,7 +30,7 @@ class CausesService:
                         "content": user_prompt
                     }
                 ],
-                model="llama-3.1-70b-versatile",
+                model="llama-3.3-70b-specdec",
                 temperature=0.1,
                 max_tokens=50,
                 seed=42
@@ -261,4 +259,3 @@ class CausesService:
             root_status=causes.root_status,
             feedback = causes.feedback
         )
-        
