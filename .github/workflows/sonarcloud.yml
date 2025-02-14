@@ -80,8 +80,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
             args:
-                -Dsonar.projectKey=Kelompok-5-PPL-A_MAAMS-BE
-                -Dsonar.organization=kelompok-5-ppl-a-1
+                -Dsonar.projectKey=hilaldfzn_MAAMS-BE
+                -Dsonar.organization=hilaldfzn
                 -Dsonar.sources=.
                 -Dsonar.exclusions=**/tests/**,test*,*test*
                 -Dsonar.tests=authentication/tests,validator/tests
