@@ -73,8 +73,6 @@ jobs:
         run: |
           source .venv/bin/activate
           coverage html
-      - name: Debug: List files
-        run: ls -laR
       - name: Run SonarCloud analysis
         uses: sonarsource/sonarcloud-github-action@master
         env:
@@ -85,7 +83,7 @@ jobs:
                 -Dsonar.projectKey=Kelompok-5-PPL-A_MAAMS-BE
                 -Dsonar.organization=kelompok-5-ppl-a-1
                 -Dsonar.sources=.
-                -Dsonar.tests=tests
+                -Dsonar.tests=authentication/tests,validator/tests
                 -Dsonar.python.coverage.reportPaths=htmlcov/coverage.xml
                 -Dsonar.host.url=https://sonarcloud.io
       - name: Upload coverage report artifact (optional)
