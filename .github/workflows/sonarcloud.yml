@@ -69,10 +69,14 @@ jobs:
         run: |
           source .venv/bin/activate
           coverage run --source=. manage.py test
-      - name: Generate coverage report
+      - name: Generate HTML coverage report
         run: |
           source .venv/bin/activate
           coverage html
+      - name: Generate XML coverage report
+        run: |
+          source .venv/bin/activate
+          coverage xml -o coverage.xml
       - name: Run SonarCloud analysis
         uses: sonarsource/sonarcloud-github-action@master
         env:
