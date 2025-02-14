@@ -85,7 +85,7 @@ from corsheaders.defaults import default_headers
 CORS_ALLOW_HEADERS = [*default_headers, "baggage", "sentry-trace"]
 
 CORS_ALLOWED_ORIGINS = [
-    os.getenv("HOST_FE"),  # Add the origin of your frontend application
+    "https://maams-fe.vercel.app/",  # Add the origin of your frontend application
 ]
 
 
